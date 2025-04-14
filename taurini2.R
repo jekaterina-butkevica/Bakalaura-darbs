@@ -5,7 +5,8 @@ if(!require(unmarked)) install.packages("unmarked")
 if(!require(dplyr)) install.packages("dplyr")
 if(!require(ggplot2)) install.packages("ggplot2")
 if(!require(forcats)) install.packages("forcats")
-
+if(!require(vegan)) install.packages("vegan")
+if(!require(tidyr)) install.packages("tidyr")
 
 
 
@@ -88,10 +89,50 @@ ggplot(Species_obs_vieta, aes(x = fct_reorder(latviskais, -observations, .fun = 
   labs(x = "Suga", y = "Novērojumu skaits", fill = "Vieta")
 
 
+
+
+
 # Tabulas "Vietas" sagatavošana ----
 TVietas <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
 unique(TVietas$vieta)
 TVietas <- TVietas[!TVietas$vieta=="Ķemeri",] #Izņemt Ķeneru transektes
+
+
+
+
+
+
+
+
+
+# Kumulatīva likne ==============================================================
+kumulativa_likne=specaccum(bentoss_izejas[,3:55], method="exact", permutations=999, continued=TRUE, drop=FALSE, gamma="jack1", subset=TRUE, ci.type=polygon )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -114,7 +155,90 @@ TUzskaites <- TUzskaites %>%
 table(TUzskaites$trans_kods) # viur jābūt 6
 
 
-## Y tabulas sagatavošana (tauriņiem kopā) -----
+
+
+
+
+
+
+
+
+
+
+# Izkliedes attēli ==============================================================
+
+
+dati <-  read_excel("uzskaisu_dati.xlsx", sheet = "Noverojumi")
+
+novērojumi <- dati %>%
+  filter(!is.na(latviskais)) %>%
+  group_by(uzsk_ID, trans_kods) %>%
+  summarise(individu_skaits = n(), .groups = "drop")
+
+visas_uzskaites <- dati %>%
+  distinct(trans_kods, uzsk_ID)
+
+visas_uzskaites <- visas_uzskaites %>%
+  left_join(novērojumi, by = c("uzsk_ID", "trans_kods")) %>%
+  mutate(individu_skaits = replace_na(individu_skaits, 0))
+
+
+apvienotie_dati <- visas_uzskaites %>%
+  left_join(TUzskaites[,c(1:3,62:78)], by = c("uzsk_ID", "trans_kods"))
+
+apvienotie_dati <- apvienotie_dati[!is.na(apvienotie_dati$trans_kods),]
+
+
+
+
+
+
+
+ggplot(apvienotie_dati, aes(x = temp_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  theme_minimal()
+
+
+
+ggplot(apvienotie_dati, aes(x = vej_atr_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  theme_minimal()
+
+
+ggplot(apvienotie_dati, aes(x = apg_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  theme_minimal()
+
+
+ggplot(apvienotie_dati, aes(x = veg_augst_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  theme_minimal()
+
+ggplot(apvienotie_dati, aes(x = augi_sum_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  theme_minimal()
+
+
+ggplot(apvienotie_dati, aes(x = ziedi_sum_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  theme_minimal()
+
+
+ggplot(apvienotie_dati, aes(x = vl_ziedi_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  theme_minimal()
+
+
+
+
+## Tauriņiem kopā: Y tabulas sagatavošana -----
 colnames(TDataset)
 TVisiNov_pa_trans_j <- data.frame(TDataset) %>%
   group_by(Jday, uzsk_ID, trans_kods, taurini, josla) %>%
@@ -195,8 +319,6 @@ head(yearlySiteCovs(TVisiudfGDS),12)
 
 
 
-
-
 ### Nulles modelis ----
 tvisi0 <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
                 K=TK, unitsOut=TunitsOut)
@@ -216,7 +338,7 @@ backTransform(tvisi0, type="phi")
 backTransform(tvisi0, type="det")
 
 plot(function(x) gxhn(x, sigma = confint(backTransform(tvisi0, type = "det"))[1,2]), 
-     0, 6, col = gray(0.7),
+     0, 4, col = gray(0.7),
      xlab = "distance (m)", ylab = "Detection probability",
      ylim = c(0, 1))
 plot(function(x) gxhn(x, sigma=confint(backTransform(tvisi0, type="det"))[1,1]), 0, 6, add=TRUE, col=gray(0.7))
@@ -272,7 +394,7 @@ summary(tvisi3)
 
 
 
-## Y tabulas sagatavošana (pa sugām) ---------
+##Pa sugām Y tabulas sagatavošana ---------
 colnames(TDataset)
 
 # Summējam katrā transektē veiktos novērojumus pa attāluma joslām
@@ -390,15 +512,9 @@ plot(function(x) gxhn(x, sigma=backTransform(t0, type="det")@estimate), 0, 10, a
 
 # Distance ====================================================================
 
-
-
-
-
-
-
-
-
-
+# Ainārs rekomendēja izmēģināt, bet man liekas, kā labāk paturēties pie 
+#unmarked, jo man ir gan nenoteiktas sugas, gan uzskaites caur sezonu,
+# distance liekas vairāk visparīga.
 
 
 
