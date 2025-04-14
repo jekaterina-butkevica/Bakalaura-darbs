@@ -1,4 +1,3 @@
-
 # Pakotnes ----
 if(!require(readxl)) install.packages("readxl")
 if(!require(lubridate)) install.packages("lubridate")
@@ -96,8 +95,11 @@ TVietas <- TVietas[!TVietas$vieta=="Ķemeri",] #Izņemt Ķeneru transektes
 
 
 
+# Unmarked gdistsamp() ===========================================================
 
-#Tabulas "Uzskaites" sagatavošana (katras uzskaites reizes specifiskā – mainīgā – informācija) -----
+
+
+##Tabulas "Uzskaites" sagatavošana (katras uzskaites reizes specifiskā – mainīgā – informācija) -----
 
 # Veidojam atsevišķu tabulu ar visām transektēm un uzskaites reizēm, lai tā kalpotu kā skelets
 transektes <- sort(unique(TDataset$trans_kods))
@@ -112,7 +114,7 @@ TUzskaites <- TUzskaites %>%
 table(TUzskaites$trans_kods) # viur jābūt 6
 
 
-# Y tabulas sagatavošana (tauriņiem kopā) -----
+## Y tabulas sagatavošana (tauriņiem kopā) -----
 colnames(TDataset)
 TVisiNov_pa_trans_j <- data.frame(TDataset) %>%
   group_by(Jday, uzsk_ID, trans_kods, taurini, josla) %>%
@@ -160,7 +162,10 @@ TVisiY[is.na(TVisiY)] <- 0
 
 
 
-# Modelēšana: visi tauriņi kopā ----
+
+
+
+## Modelēšana: visi tauriņi kopā ----
 
 #Modeļa iestatījumi
 R = 80 #transekšu skaits. (Tikai Ģipka un Apšupe)
@@ -192,7 +197,7 @@ head(yearlySiteCovs(TVisiudfGDS),12)
 
 
 
-## Nulles modelis ----
+### Nulles modelis ----
 tvisi0 <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
                 K=TK, unitsOut=TunitsOut)
 summary(tvisi0)
@@ -231,7 +236,7 @@ plot(re, layout=c(10,8), xlim=c(-1, 20))
 
 
 
-## Temperatūras modelis ---
+## Temperatūras un vietas modelis ---
 tvisi3 <- gdistsamp(~1, ~temp_vid*vieta, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
                 K=TK, unitsOut=TunitsOut)
 summary(tvisi3)
@@ -260,78 +265,14 @@ ggplot(E.phi, aes(x = temp_vid, y = Predicted, color = as.factor(vieta))) +
 
 
 
-## Traucējumu modelis ----
-tvisi4 <- gdistsamp(~1, ~1, ~traucejumi-1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
+## Vietas modelis ---
+tvisi3 <- gdistsamp(~1, ~1, ~vieta-1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
                     K=TK, unitsOut=TunitsOut)
-summary(tvisi4)
-
-#Prognozē det traucējumu kategorijām
-newdata<-data.frame(traucejumi <-  (c("Ir","Nav")))
-(E.detV<-predict(tvisi4, type='det', newdata=newdata, appendData=TRUE))
-
-plot(function(x) gxhn(x, sigma=E.detV[1,1]), 0, 10, col=1, xlab="distance (m)", ylab="Probability density")
-plot(function(x) gxhn(x, sigma=E.detV[2,1]), 0, 10, col=2, add=TRUE)
-
-
-summary(TDataset$vej_atr_vid)
-
-
-## Jday ----
-tvisi5 <- gdistsamp(~vieta, ~1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                    K=TK, unitsOut=TunitsOut)
-summary(tvisi5)
-
-newdata<-data.frame(Jday=seq(173, 240, length=10))
-(E.phi<-predict(tvisi5, type='phi', newdata=newdata, appendData=TRUE))
-
-par(mai=c(1,1,0,0))
-with(E.phi, { 
-  plot(Jday, Predicted, ylim=c(0,max(upper)), type="l",
-       ylab=expression(paste('Pieejamība ( ', phi, ' )')),
-       xlab="Diena no gada sākumā", cex.lab=1.5, cex.axis=1)
-  polygon(c(Jday, rev(Jday)), c(upper, rev(lower)), col = "gray90", border = "gray90")
-  lines(Jday, Predicted, col=gray(0))
-})
+summary(tvisi3)
 
 
 
-
-
-
-## Jday x temp modelis -----
-tvisi6 <- gdistsamp(~1, ~Jday*temp_vid, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                    K=TK, unitsOut=TunitsOut)
-summary(tvisi6)
-
-
-newdata<-expand.grid(temp_vid = seq(13.7, 28.2, by = 1), 
-                            Jday = seq(173.0, 240.0 , by = 10))
-(prognoze_temp_vejs<-predict(tvisi6, type='phi', newdata = newdata, appendData=TRUE))#var pārbaudīt kāda ir konstatēšana
-
-##### PREZ
-ggplot(prognoze_temp_vejs, aes(x = temp_vid, y = Predicted, color = as.factor(Jday))) +
-  geom_ribbon(aes(ymin = Predicted - SE, ymax = Predicted + SE, fill = as.factor(Jday)), alpha = 0.3) +
-  geom_line(size = 1) +
-  scale_color_manual(values = c("blue", "red", "green", "purple", "orange", "skyblue4", "pink")) +  # Pielāgo krāsas vēja līknēm
-  scale_fill_manual(values = c("blue", "red", "green", "purple", "orange", "skyblue4", "pink"))  + 
-  theme_classic() +
-  labs(title = expression("Prognozētās kāļu balteņa konstatēšanas varbūtības \nizmaiņas temperatūras un vēja mijiedarbības ietekmē"),
-       x = "Temperatūra (°C)", 
-       y = "Konstatēšanas varbūtība",
-       color = "Vējš (Bft)",
-       fill = "Vējš (Bft)") +
-  theme(plot.title = element_text(size = 16, hjust = 0.5),
-        legend.position = "right",
-        plot.margin = margin(t = 20, r = 10, b = 10, l = 10))
-
-
-
-
-
-
-
-
-# Y tabulas sagatavošana (pa sugām) ---------
+## Y tabulas sagatavošana (pa sugām) ---------
 colnames(TDataset)
 
 # Summējam katrā transektē veiktos novērojumus pa attāluma joslām
@@ -392,7 +333,7 @@ TY[is.na(TY)] <- 0
 
 
 
-# Modelēšana izvēlētajai sugai ----
+## Modelēšana izvēlētajai sugai ----
 
 
 #Modeļa iestatījumi
@@ -424,7 +365,7 @@ head(yearlySiteCovs(TudfGDS),12)
 
 
 
-## Nulles modelis ----
+### Nulles modelis ----
 t0 <- gdistsamp(~1, ~1, ~1, TudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
                 K=TK, unitsOut=TunitsOut)
 summary(t0)
@@ -441,171 +382,13 @@ plot(function(x) gxhn(x, sigma=backTransform(t0, type="det")@estimate), 0, 10, a
 
 
 
-## Kustības intensitātes modelis (ŠOBRĪD NAV LIETOJAMS)----
-
-t1 <- gdistsamp(~kust_int-1, ~1, ~1, TudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                K=TK, unitsOut=TunitsOut)
-summary(t1)
-
-# Blīvuma prognoze
-kust_int <- data.frame(kust_int = as.factor(c("Zemā", "Vidējā", "Augstā")))#pārvēršam par faktoru
-
-(E.den <-predict(t1, type='lambda', newdata=kust_int, appendData=TRUE))
-
-library(ggplot2)
-
-ggplot(E.den, aes(x = kust_int, y = Predicted, color = kust_int)) +
-  geom_point(size = 4) +  # Punkti, kas attēlo prognozētos blīvumus
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.1) +  # Ticamības intervāls
-  labs(
-    title = "Prognozētais tauriņu blīvums katrai kust intensitātei",
-    x = "Kustības intensitāte",
-    y = "Prognozētais tauriņu blīvums",
-    color = "kust_int"
-  ) +
-  theme_minimal()
-
-table(TDataset$kust_int)
-
-#Pārbaude
-ggplot(TUzskaites, aes(kust_int, fill = vieta)) + stat_count()
-# Nu jā, izņemot Ķemerus, pazūd lielāka daļa no transekta, kur bija vidēji stipra autokustība.
-
-
-
-
-
-## Vietas modelis ----
-t2 <- gdistsamp(~vieta-1, ~1, ~1, TudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                K=TK, unitsOut=TunitsOut)
-summary(t2)
-
-# Blīvuma prognoze
-newdata<-data.frame(vieta=as.factor(c("Ģipka","Apšupe")))
-(TE.lamB<-predict(t2, type='lambda', newdata=newdata, appendData=TRUE))
-
-with(TE.lamB, { 
-  plot(1:2, Predicted, pch=1, xaxt='n', xlab='Vieta',
-       ylab=expression(paste('Density ( ', lambda, ' )')),
-       ylim=c(0,max(upper)), col=4)
-  axis(1, at=1:2, labels=vieta)
-  arrows(1:2, lower, 1:2, upper, code=3, angle=90, length=0.03, col=4)
-})
-
-ggplot(TE.lamB, aes(x = vieta, y = Predicted)) +
-  geom_point(size = 3) +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.1) +
-  labs(
-    x = "Vieta",
-    y = expression(paste("Density ( ", lambda, " )"))
-  ) +
-  theme_minimal()
-
-
-
-
-
-## Temperatūras modelis ----
-
-t3 <- gdistsamp(~1, ~temp_vid, ~1, TudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                K=TK, unitsOut=TunitsOut)
-summary(t3)
-
-
-newdata<-data.frame(temp_vid=seq(13.7, 28.2, length=15))
-E.phi<-predict(t3, type='phi', newdata=newdata, appendData=TRUE)
-E.det<-predict(t3, type='det', newdata=newdata, appendData=TRUE)
-
-par(mai=c(1,1,0,0))
-with(E.phi, { 
-  plot(temp_vid, Predicted, ylim=c(0,max(upper)), type="l",
-       ylab=expression(paste('Pieejamība ( ', phi, ' )')),
-       xlab="Vidējā temperatūra (C)", cex.lab=1.5, cex.axis=1)
-  polygon(c(temp_vid, rev(temp_vid)), c(upper, rev(lower)), col = "gray90", border = "gray90")
-  lines(temp_vid, Predicted, col=gray(0))
-})
-
-par(mai=c(1,1,0,0))
-with(E.det, { 
-  plot(temp_vid, Predicted, ylim=c(0,max(upper)), type="l",
-       ylab=expression(paste('Detection ( ', sigma, ' )')),
-       xlab="Vidējā temperatūra (C)", cex.lab=1.5, cex.axis=1)
-  polygon(c(temp_vid, rev(temp_vid)), c(upper, rev(lower)), col = "gray90", border = "gray90")
-  lines(temp_vid, Predicted, col=gray(0))
-})
 
 
 
 
 
 
-
-
-
-
-
-
-
-## Apgaismojuma modelis ----
-
-t4 <- gdistsamp(~1, ~apg_vid, ~apg_vid, TudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                K=TK, unitsOut=TunitsOut)
-summary(t4)
-
-
-newdata<-data.frame(apg_vid=seq(0, 100, length=100))
-E.phi<-predict(t4, type='phi', newdata=newdata, appendData=TRUE)
-E.det<-predict(t4, type='det', newdata=newdata, appendData=TRUE)
-
-
-par(mai=c(1,1,0,0))
-with(E.phi, { 
-  plot(apg_vid, Predicted, ylim=c(0,max(upper)), type="l",
-       ylab=expression(paste('Pieejamība ( ', phi, ' )')),
-       xlab="Apgaismojums %", cex.lab=1.5, cex.axis=1)
-  polygon(c(apg_vid, rev(apg_vid)), c(upper, rev(lower)), col = "gray90", border = "gray90")
-  lines(apg_vid, Predicted, col=gray(0))
-})
-
-par(mai=c(1,1,0,0))
-with(E.det, { 
-  plot(apg_vid, Predicted, ylim=c(0,max(upper)), type="l",
-       ylab=expression(paste('Detection ( ', sigma, ' )')),
-       xlab="Apgaismojums %", cex.lab=1.5, cex.axis=1)
-  polygon(c(apg_vid, rev(apg_vid)), c(upper, rev(lower)), col = "gray90", border = "gray90")
-  lines(apg_vid, Predicted, col=gray(0))
-})
-
-
-## Cits apgaismojuma modelis ----
-t5 <- gdistsamp(~1, ~poly(apg_vid, 2), ~poly(apg_vid, 2), TudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                K=TK, unitsOut=TunitsOut)
-summary(t5)
-
-
-newdata<-data.frame(apg_vid=seq(0, 100, length=100))
-E.phi<-predict(t5, type='phi', newdata=newdata, appendData=TRUE)
-E.det<-predict(t5, type='det', newdata=newdata, appendData=TRUE)
-
-par(mai=c(1,1,0,0))
-with(E.phi, { 
-  plot(apg_vid, Predicted, ylim=c(0,max(upper)), type="l",
-       ylab=expression(paste('Pieejamība ( ', phi, ' )')),
-       xlab="Apgaismojums %", cex.lab=1.5, cex.axis=1)
-  polygon(c(apg_vid, rev(apg_vid)), c(upper, rev(lower)), col = "gray90", border = "gray90")
-  lines(apg_vid, Predicted, col=gray(0))
-})
-
-
-par(mai=c(1,1,0,0))
-with(E.det, { 
-  plot(apg_vid, Predicted, ylim=c(0,max(upper)), type="l",
-       ylab=expression(paste('Detection ( ', sigma, ' )')),
-       xlab="Apgaismojums %", cex.lab=1.5, cex.axis=1)
-  polygon(c(apg_vid, rev(apg_vid)), c(upper, rev(lower)), col = "gray90", border = "gray90")
-  lines(apg_vid, Predicted, col=gray(0))
-})
-
+# Distance ====================================================================
 
 
 
