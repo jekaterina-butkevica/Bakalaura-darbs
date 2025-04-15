@@ -257,14 +257,23 @@ ggplot(apvienotie_dati[apvienotie_dati$individu_skaits > 0,], aes(x = temp_vid, 
   labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
   theme_minimal()
 
-#
-ggplot(apvienotie_dati[apvienotie_dati$vieta == "Ģipka" & apvienotie_dati$kust_int != "Nav" & apvienotie_dati$individu_skaits > 0,], aes(x = temp_vid, y = individu_skaits, color = kust_int)) +
+# Man liekas, ka tukšas transektes trauce novērot ietekmi. 
+#Tauriņi bieži grupējas un man liekas, ir jāskatās tikai tos, kur bija 
+
+ggplot(apvienotie_dati[apvienotie_dati$vieta == "Ģipka" & 
+                         apvienotie_dati$kust_int != "Nav" & 
+                         apvienotie_dati$individu_skaits > 0,], 
+       aes(x = temp_vid, y = individu_skaits, color = kust_int)) +
   geom_point() +
   geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
   theme_minimal()
 
-ggplot(apvienotie_dati[apvienotie_dati$vieta == "Apšupe" & apvienotie_dati$kust_int != "Nav" & apvienotie_dati$kust_int != "Vidējā" & apvienotie_dati$individu_skaits > 0,], aes(x = temp_vid, y = individu_skaits, color = kust_int)) +
+ggplot(apvienotie_dati[apvienotie_dati$vieta == "Apšupe" &
+                         apvienotie_dati$kust_int != "Nav" & 
+                         apvienotie_dati$kust_int != "Vidējā" & 
+                         apvienotie_dati$individu_skaits > 0,], 
+       aes(x = temp_vid, y = individu_skaits, color = kust_int)) +
   geom_point() +
   geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
