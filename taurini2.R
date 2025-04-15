@@ -7,7 +7,7 @@ if(!require(ggplot2)) install.packages("ggplot2")
 if(!require(forcats)) install.packages("forcats")
 if(!require(vegan)) install.packages("vegan")
 if(!require(tidyr)) install.packages("tidyr")
-
+if(!require(sf)) install.packages("sf")
 
 
 # Dati --------
@@ -38,7 +38,8 @@ for (sak_col in sakums_colnames) {
 summary(TDataset)
 
 # Datuma formatēšana
-TDataset$datums <- as.Date(TDataset$datums, format= "%d.%m.%y") 
+TDataset$datums <- as.Date(TDataset$datums, format= "%d.%m.%Y") 
+head(TDataset$datums)
 TDataset$Jday <- yday(TDataset$datums)
 summary(TDataset)
 
@@ -101,8 +102,36 @@ TVietas <- TVietas[!TVietas$vieta=="Ķemeri",] #Izņemt Ķeneru transektes
 
 
 
+# Transekšu centroīdi ===========================================================
+TVietas_visi <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
+unique(TVietas_visi$vieta)
+
+head(TVietas_visi)
+class(TVietas_visi$x_sakums)
+
+TVietas_visi <- TVietas_visi %>%
+  mutate(across(c(x_sakums, y_sakums, x_beigas, y_beigas), as.numeric))
+
+class(TVietas_visi$x_sakums)
 
 
+TVietas_viduspunkti <- TVietas_visi[,c(1:6)] %>%
+  mutate(
+    x_vidus = (TVietas_visi$x_sakums + TVietas_visi$x_beigas) / 2,
+    y_vidus = (TVietas_visi$y_sakums + TVietas_visi$y_beigas) / 2
+  )
+
+
+vietas_centroidi <- TVietas_viduspunkti %>%
+  group_by(vieta) %>%
+  summarise(
+    x_centroid = mean(x_vidus),
+    y_centroid = mean(y_vidus),
+    .groups = "drop"
+  )
+
+
+print(vietas_centroidi, n = 10)
 
 
 # Kumulatīva likne ==============================================================
@@ -174,6 +203,7 @@ apvienotie_dati <- apvienotie_dati[!is.na(apvienotie_dati$trans_kods),]
 
 ggplot(apvienotie_dati, aes(x = temp_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
+  geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
   theme_minimal()
 
@@ -181,37 +211,64 @@ ggplot(apvienotie_dati, aes(x = temp_vid, y = individu_skaits, color = vieta)) +
 
 ggplot(apvienotie_dati, aes(x = vej_atr_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
+  geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
   theme_minimal()
 
 
 ggplot(apvienotie_dati, aes(x = apg_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
+  geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
   theme_minimal()
 
 
 ggplot(apvienotie_dati, aes(x = veg_augst_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
+  geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
   theme_minimal()
 
 ggplot(apvienotie_dati, aes(x = augi_sum_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
+  geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
   theme_minimal()
 
 
 ggplot(apvienotie_dati, aes(x = ziedi_sum_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
+  geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
   theme_minimal()
 
 
 ggplot(apvienotie_dati, aes(x = vl_ziedi_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
+  geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
   theme_minimal()
+
+
+
+
+# Histogrammas ==============================================================
+
+
+ggplot(TDataset[TDataset$taurini == "Ir" & !is.na(TDataset$uzvediba),], aes(x = uzvediba, fill = vieta)) +  # X ass ir uzvedības kategorija, krāsa vietai
+  geom_bar(stat = "count", position = "dodge") +  # Stabiņi blakus katrai vietai
+  facet_wrap(vieta~ datums) +  # Facetēšana pēc uzskaites ID
+  labs(x = "Uzvedības kategorija", y = "Skaits", title = "Uzvedības sadalījums pa uzskaitēm un vietām") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))  # Apgriež X ass tekstu vertikāli
+
+
+
+
+TDataset$datums
+
+
+
 
 
 
