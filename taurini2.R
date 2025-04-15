@@ -106,21 +106,7 @@ TVietas <- TVietas[!TVietas$vieta=="Ķemeri",] #Izņemt Ķeneru transektes
 
 
 # Kumulatīva likne ==============================================================
-kumulativa_likne=specaccum(bentoss_izejas[,3:55], method="exact", permutations=999, continued=TRUE, drop=FALSE, gamma="jack1", subset=TRUE, ci.type=polygon )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#kumulativa_likne=specaccum(bentoss_izejas[,3:55], method="exact", permutations=999, continued=TRUE, drop=FALSE, gamma="jack1", subset=TRUE, ci.type=polygon )
 
 
 
@@ -139,7 +125,6 @@ kumulativa_likne=specaccum(bentoss_izejas[,3:55], method="exact", permutations=9
 # Unmarked gdistsamp() ===========================================================
 
 
-
 ##Tabulas "Uzskaites" sagatavošana (katras uzskaites reizes specifiskā – mainīgā – informācija) -----
 
 # Veidojam atsevišķu tabulu ar visām transektēm un uzskaites reizēm, lai tā kalpotu kā skelets
@@ -153,13 +138,6 @@ TUzskaites <- TDataset[,c(1:3,4:78)]
 TUzskaites <- TUzskaites %>%
   distinct(trans_kods, uzsk_ID, .keep_all = TRUE)
 table(TUzskaites$trans_kods) # viur jābūt 6
-
-
-
-
-
-
-
 
 
 
