@@ -191,7 +191,7 @@ visas_uzskaites <- visas_uzskaites %>%
 
 
 apvienotie_dati <- visas_uzskaites %>%
-  left_join(TUzskaites[,c(1:3,62:78)], by = c("uzsk_ID", "trans_kods"))
+  left_join(TUzskaites[,c(1:3,38:44,62:78)], by = c("uzsk_ID", "trans_kods"))
 
 apvienotie_dati <- apvienotie_dati[!is.na(apvienotie_dati$trans_kods),]
 
@@ -204,7 +204,7 @@ apvienotie_dati <- apvienotie_dati[!is.na(apvienotie_dati$trans_kods),]
 ggplot(apvienotie_dati, aes(x = temp_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
   geom_smooth(method = "lm") +
-  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
   theme_minimal()
 
 
@@ -212,38 +212,73 @@ ggplot(apvienotie_dati, aes(x = temp_vid, y = individu_skaits, color = vieta)) +
 ggplot(apvienotie_dati, aes(x = vej_atr_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
   geom_smooth(method = "lm") +
-  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
   theme_minimal()
 
 
 ggplot(apvienotie_dati, aes(x = apg_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
   geom_smooth(method = "lm") +
-  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
   theme_minimal()
 
 
 ggplot(apvienotie_dati, aes(x = veg_augst_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
   geom_smooth(method = "lm") +
-  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
   theme_minimal()
 
 ggplot(apvienotie_dati, aes(x = augi_sum_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
   geom_smooth(method = "lm") +
-  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
   theme_minimal()
 
 
 ggplot(apvienotie_dati, aes(x = ziedi_sum_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
   geom_smooth(method = "lm") +
-  labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
   theme_minimal()
 
 
 ggplot(apvienotie_dati, aes(x = vl_ziedi_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
+  theme_minimal()
+
+# Izkliedes attēli neņemot vēra tukšas transektes
+
+ggplot(apvienotie_dati[apvienotie_dati$individu_skaits > 0,], aes(x = temp_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
+  theme_minimal()
+
+#
+ggplot(apvienotie_dati[apvienotie_dati$vieta == "Ģipka" & apvienotie_dati$kust_int != "Nav" & apvienotie_dati$individu_skaits > 0,], aes(x = temp_vid, y = individu_skaits, color = kust_int)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
+  theme_minimal()
+
+ggplot(apvienotie_dati[apvienotie_dati$vieta == "Apšupe" & apvienotie_dati$kust_int != "Nav" & apvienotie_dati$kust_int != "Vidējā" & apvienotie_dati$individu_skaits > 0,], aes(x = temp_vid, y = individu_skaits, color = kust_int)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
+  theme_minimal()
+
+
+ggplot(apvienotie_dati, aes(x = vej_atr_vid, y = individu_skaits, color = vieta)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
+  theme_minimal()
+
+
+ggplot(apvienotie_dati, aes(x = apg_vid, y = individu_skaits, color = vieta)) +
   geom_point() +
   geom_smooth(method = "lm") +
   labs(x = "X ass", y = "Y ass", title = "Izkliedes attēls") +
@@ -261,12 +296,6 @@ ggplot(TDataset[TDataset$taurini == "Ir" & !is.na(TDataset$uzvediba),], aes(x = 
   labs(x = "Uzvedības kategorija", y = "Skaits", title = "Uzvedības sadalījums pa uzskaitēm un vietām") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))  # Apgriež X ass tekstu vertikāli
-
-
-
-
-TDataset$datums
-
 
 
 
