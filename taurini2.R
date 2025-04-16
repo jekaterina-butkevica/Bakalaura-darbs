@@ -7,7 +7,7 @@ if(!require(ggplot2)) install.packages("ggplot2")
 if(!require(forcats)) install.packages("forcats")
 if(!require(vegan)) install.packages("vegan")
 if(!require(tidyr)) install.packages("tidyr")
-if(!require(sf)) install.packages("sf")
+
 
 
 # Dati --------
@@ -100,9 +100,12 @@ TVietas <- TVietas[!TVietas$vieta=="Ķemeri",] #Izņemt Ķeneru transektes
 
 
 
+# Karšu lietas, lai neveidotu citu failu ===========================================================
 
+# Transekšu centroīdi 
 
-# Transekšu centroīdi ===========================================================
+if(!require(sf)) install.packages("sf")
+
 TVietas_visi <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
 unique(TVietas_visi$vieta)
 
@@ -131,7 +134,40 @@ vietas_centroidi <- TVietas_viduspunkti %>%
   )
 
 
-print(vietas_centroidi, n = 10)
+print(vietas_centroidi)
+
+
+
+centroidi_sf <- st_as_sf(vietas_centroidi, coords = c("x_centroid", "y_centroid"), crs = 3059)  # LKS-92
+
+if(!require(rnaturalearth)) install.packages("rnaturalearth")
+if(!require(rnaturalearthdata)) install.packages("rnaturalearthdata")
+
+
+
+latvija_sf <- ne_countries(scale = "medium", returnclass = "sf") |>
+  dplyr::filter(admin == "Latvia")
+
+centroidi_sf <- st_transform(centroidi_sf, crs = st_crs(latvija_sf)) 
+
+
+ggplot() +
+  geom_sf(data = latvija_sf, fill = "white", color = "black") +
+  geom_sf(data = centroidi_sf, aes(color = vieta), size = 3) +
+  labs(title = "Pētijuma vietu izvieotjums Latvijas teritorijā") +
+  theme_minimal()
+
+
+ggplot() +
+  geom_sf(data = latvija_sf, fill = "white", color = "black") +
+  geom_sf(data = centroidi_sf, aes(color = vieta), size = 4) +  #i
+  labs(title = "Pētijuma vietu izvieotjums Latvijas teritorijā") +
+  theme(
+    plot.title = element_text(size = 18, face = "bold"), 
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10)
+  )
+
 
 
 # Kumulatīva likne ==============================================================
@@ -340,7 +376,7 @@ TVisipilnais <- merge(TUzskaites, TVisiNov_pa_trans_j_w, by=c("trans_kods", "uzs
                   all.x=TRUE, sort=TRUE)
 
 # Datuma formātešana 
-TVisipilnais$datums <- as.Date(TVisipilnais$datums, format= "%d.%m.%y")
+TVisipilnais$datums <- as.Date(TVisipilnais$datums, format= "%d.%m.%Y")
 TVisipilnais$Jday <- yday(TVisipilnais$datums)
 
 #Pārbaudīt, vai uzskaišu reižu skaits ir vienāds.
