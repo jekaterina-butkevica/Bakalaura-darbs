@@ -100,73 +100,7 @@ TVietas <- TVietas[!TVietas$vieta=="Ķemeri",] #Izņemt Ķeneru transektes
 
 
 
-# Karšu lietas, lai neveidotu citu failu ===========================================================
 
-# Transekšu centroīdi 
-
-if(!require(sf)) install.packages("sf")
-
-TVietas_visi <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
-unique(TVietas_visi$vieta)
-
-head(TVietas_visi)
-class(TVietas_visi$x_sakums)
-
-TVietas_visi <- TVietas_visi %>%
-  mutate(across(c(x_sakums, y_sakums, x_beigas, y_beigas), as.numeric))
-
-class(TVietas_visi$x_sakums)
-
-
-TVietas_viduspunkti <- TVietas_visi[,c(1:6)] %>%
-  mutate(
-    x_vidus = (TVietas_visi$x_sakums + TVietas_visi$x_beigas) / 2,
-    y_vidus = (TVietas_visi$y_sakums + TVietas_visi$y_beigas) / 2
-  )
-
-
-vietas_centroidi <- TVietas_viduspunkti %>%
-  group_by(vieta) %>%
-  summarise(
-    x_centroid = mean(x_vidus),
-    y_centroid = mean(y_vidus),
-    .groups = "drop"
-  )
-
-
-print(vietas_centroidi)
-
-
-
-centroidi_sf <- st_as_sf(vietas_centroidi, coords = c("x_centroid", "y_centroid"), crs = 3059)  # LKS-92
-
-if(!require(rnaturalearth)) install.packages("rnaturalearth")
-if(!require(rnaturalearthdata)) install.packages("rnaturalearthdata")
-
-
-
-latvija_sf <- ne_countries(scale = "medium", returnclass = "sf") |>
-  dplyr::filter(admin == "Latvia")
-
-centroidi_sf <- st_transform(centroidi_sf, crs = st_crs(latvija_sf)) 
-
-
-ggplot() +
-  geom_sf(data = latvija_sf, fill = "white", color = "black") +
-  geom_sf(data = centroidi_sf, aes(color = vieta), size = 3) +
-  labs(title = "Pētijuma vietu izvieotjums Latvijas teritorijā") +
-  theme_minimal()
-
-
-ggplot() +
-  geom_sf(data = latvija_sf, fill = "white", color = "black") +
-  geom_sf(data = centroidi_sf, aes(color = vieta), size = 4) +  #i
-  labs(title = "Pētijuma vietu izvieotjums Latvijas teritorijā") +
-  theme(
-    plot.title = element_text(size = 18, face = "bold"), 
-    legend.title = element_text(size = 12),
-    legend.text = element_text(size = 10)
-  )
 
 
 
