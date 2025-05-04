@@ -11,8 +11,11 @@ summary(TDataset)
 TDataset <- TDataset[!is.na(TDataset$uzsk_ID),]  #Noņem tukšās rindas
 dim(TDataset)
 
-# Pievienot iztrūkstošo uzskaiti Ķemeros
 
+#Noņemt liekas kolonnas
+TDataset_indeksi <- TDataset[, -c(5:45,50:57)]
+
+# Pievienot iztrūkstošo uzskaiti Ķemeros
 kemeri_trans <- TDataset %>%
   filter(vieta == "Ķemeri") %>%
   distinct(trans_kods) %>%
@@ -39,43 +42,13 @@ TDataset_pilnais$datums <- as.Date(TDataset_pilnais$datums, format = "%d.%m.%Y")
 
 
 
-# Abundance indeksa salīdzinājums starp vietam -------------
-unique(TDataset_pilnais$latviskais)
-
-izveleta_suga <- "Kāpostu baltenis"
-
-sugas_indeksi <- TDataset_pilnais %>%
-  filter(latviskais == izveleta_suga) %>%        # tikai izvēlētā suga
-  group_by(vieta, trans_kods) %>%       # grupē pēc vietas, transekta, uzskaites
-  summarise(skaits = n(), .groups = "drop")      # saskaita indivīdus (rindas)
+# Abundance indeksa salīdzinājums starp vietam =================================
 
 # Direktorija
 dir.create("Pollard/indeksi", recursive = TRUE)
 
 
-
-index_plot <- ggplot(sugas_indeksi, aes(x = vieta, y = skaits, fill = vieta, color = vieta)) +
-  geom_violin(alpha = 0.5, linewidth = 1) +
-  geom_jitter(width = 0.05, alpha = 1, size = 2) +
-  stat_summary(fun = mean, geom = "point", shape = 21, size = 5, colour = "black") +
-  stat_n_text(y.pos = max(sugas_indeksi$skaits) + 1.5, size = 4, color = "black") +  # ← šeit tiek pielikts novērojumu skaits
-  scale_y_continuous(breaks = seq(0, max(sugas_indeksi$skaits) + 2, by = 1)) +
-  theme_minimal(base_size = 14) +
-  labs(x = "Vieta", y = "Pollarda pārpilnības indekss", title = izveleta_suga)
-index_plot
-
-
-ggsave(filename = file.path("Pollard/indeksi", paste0(izveleta_suga, ".png")), 
-       plot = index_plot, 
-       width = 10,
-       height = 6,
-       dpi = 300,
-       bg = "white")
-
-
-
-# Vai ciklā
-sugas <- unique(TDataset_pilnais$latviskais)
+sugas <- unique(TDataset_indeksi$latviskais)
 
 
 for (izveleta_suga in sugas) {
@@ -124,7 +97,7 @@ for (izveleta_suga in sugas) {
 
 
 
-# Sugu fenoloģijas liknes -----
+# Sugu fenoloģijas liknes ======================================================
 
 # Savā metosika Pollards uzsvēra, kā transekte var būt salīdzināma tikai
 # pati ar sevi, nevis savā starpā. Tādēļ izvēlos fenoloģiju būvēt pēc transekšu
