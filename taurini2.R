@@ -74,6 +74,9 @@ ggplot(Species_obs,aes(x=fct_reorder(latviskais, -observations), y=observations)
   theme(axis.text.x = element_text(angle=90,vjust=0.5,hjust=1))
 
 
+
+
+
 #Katrai sugai novērojumu skaits pa vietām
 Species_obs_vieta <- TDataset %>%
   filter(!is.na(latviskais), !is.na(vieta)) %>%
@@ -85,6 +88,7 @@ ggplot(Species_obs_vieta, aes(x = fct_reorder(latviskais, -observations, .fun = 
                         fill = vieta)) +
   geom_col() +
   geom_hline(yintercept = 40) +
+  facet_wrap(~vieta) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
   labs(x = "Suga", y = "Novērojumu skaits", fill = "Vieta")
