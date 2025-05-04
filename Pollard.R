@@ -38,8 +38,14 @@ TDataset_pilnais <- TDataset_pilnais[, -c(5:45,50:57)]
 
 # Datumi
 TDataset_pilnais$datums <- as.Date(TDataset_pilnais$datums, format = "%d.%m.%Y")
+unique(TDataset_pilnais$datums)
 
-
+TDataset_pilnais <- TDataset_pilnais %>%
+  mutate(datums = case_when(
+    datums == as.Date("2024-06-25") ~ as.Date("2024-06-26"),
+    datums == as.Date("2024-07-17") ~ as.Date("2024-07-18"),
+    TRUE ~ datums  # visi pārējie datumi paliek nemainīti
+  ))
 
 
 # Abundance indeksa salīdzinājums starp vietam =================================
@@ -144,7 +150,7 @@ for (izveleta_suga in sugas) {
       date_labels = "%d.%m"
     ) +
     scale_y_continuous(
-      limits = c(0, 12),
+      limits = c(0, 15),
       breaks = seq(0, max(suga_dati$skaits), by = 1)
     ) +
     labs(
