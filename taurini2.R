@@ -13,16 +13,15 @@ if(!require(tidyr)) install.packages("tidyr")
 # Dati --------
 TDataset <- read_excel("uzskaisu_dati.xlsx", sheet = "Noverojumi")
 summary(TDataset)
-TDataset <- TDataset[!is.na(TDataset$trans_kods),]  #Noņem tukšās rindas
-summary(TDataset)
-
+TDataset <- TDataset[!is.na(TDataset$uzsk_ID),]  #Noņem tukšās rindas
+dim(TDataset)
 
 #Vidējo vērtību aprēķins
-TDataset$ziedi_sum_sak <- (TDataset$rl_ziedi_sak + TDataset$zl_ziedi_sak + TDataset$vl_ziedi_sak + TDataset$al_ziedi_sak)
-TDataset$ziedi_sum_beig <- (TDataset$rl_ziedi_beig + TDataset$zl_ziedi_beig + TDataset$vl_ziedi_beig + TDataset$al_ziedi_beig)
-TDataset$augi_sum_sak <- (TDataset$rl_augi_sak + TDataset$zl_augi_sak + TDataset$vl_augi_sak + TDataset$al_augi_sak)
-TDataset$augi_sum_beig <- (TDataset$rl_augi_beig + TDataset$zl_augi_beig + TDataset$vl_augi_beig + TDataset$al_augi_beig)
-
+TDataset$ziedi_sum_sak <- (TDataset$rl_ziedi_sak + TDataset$z_ziedi_sak + TDataset$v_ziedi_sak + TDataset$a_ziedi_sak)
+TDataset$ziedi_sum_beig <- (TDataset$rl_ziedi_beig + TDataset$z_ziedi_beig + TDataset$v_ziedi_beig + TDataset$a_ziedi_beig)
+TDataset$augi_sum_sak <- (TDataset$rl_augi_sak + TDataset$z_augi_sak + TDataset$v_augi_sak + TDataset$a_augi_sak)
+TDataset$augi_sum_beig <- (TDataset$rl_augi_beig + TDataset$z_augi_beig + TDataset$v_augi_beig + TDataset$a_augi_beig)
+dim(TDataset)
 
 sakums_colnames <- names(TDataset)[grepl("_sak$", names(TDataset))]
 
@@ -36,6 +35,7 @@ for (sak_col in sakums_colnames) {
   }
 }
 summary(TDataset)
+dim(TDataset)
 
 # Datuma formatēšana
 TDataset$datums <- as.Date(TDataset$datums, format= "%d.%m.%Y") 
@@ -120,8 +120,6 @@ TVietas <- TVietas[!TVietas$vieta=="Ķemeri",] #Izņemt Ķeneru transektes
 
 
 
-
-# Unmarked gdistsamp() ===========================================================
 
 
 ##Tabulas "Uzskaites" sagatavošana (katras uzskaites reizes specifiskā – mainīgā – informācija) -----
@@ -227,8 +225,7 @@ ggplot(apvienotie_dati[apvienotie_dati$individu_skaits > 0,], aes(x = temp_vid, 
   labs(x = "X ass", y = "Indivīdu skaits", title = "Izkliedes attēls") +
   theme_minimal()
 
-# Man liekas, ka tukšas transektes trauce novērot ietekmi. 
-#Tauriņi bieži grupējas un man liekas, ir jāskatās tikai tos, kur bija 
+
 
 ggplot(apvienotie_dati[apvienotie_dati$vieta == "Ģipka" & 
                          apvienotie_dati$kust_int != "Nav" & 
@@ -543,22 +540,6 @@ backTransform(t0, type="det")
 plot(function(x) gxhn(x, sigma=confint(backTransform(t0, type="det"))[1,2]), 0, 10, col=gray(0.7), xlab="distance (m)", ylab="Detection probability")
 plot(function(x) gxhn(x, sigma=confint(backTransform(t0, type="det"))[1,1]), 0, 10, add=TRUE, col=gray(0.7))
 plot(function(x) gxhn(x, sigma=backTransform(t0, type="det")@estimate), 0, 10, add=TRUE)
-
-
-
-
-
-
-
-
-
-
-# Distance ====================================================================
-
-# Ainārs rekomendēja izmēģināt, bet man liekas, kā labāk paturēties pie 
-#unmarked, jo man ir gan nenoteiktas sugas, gan uzskaites caur sezonu,
-# distance liekas vairāk visparīga.
-
 
 
 

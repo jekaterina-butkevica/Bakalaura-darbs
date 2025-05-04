@@ -42,33 +42,28 @@ vietu_centroidi <- Vietas %>%
 
 print(vietu_centroidi)
 
-vietas_centroidi <- st_as_sf(vietu_centroidi, coords = c("x_centroid", "y_centroid"), crs = 3059)  # LKS-92
+vietu_centroidi <- st_as_sf(vietu_centroidi, coords = c("x_centroid", "y_centroid"), crs = 3059)  # LKS-92
 
 
 
 latvija_sf <- ne_countries(scale = "medium", returnclass = "sf") |>
   dplyr::filter(admin == "Latvia")
 
-vietas_centroidi <- st_transform(vietas_centroidi, crs = st_crs(latvija_sf)) 
+vietu_centroidi <- st_transform(vietu_centroidi, crs = st_crs(latvija_sf)) 
 
 
-head(vietas_centroidi)
-vietas_centroidi$tips <- ifelse(vietas_centroidi$vieta %in% c("Ģipka", "Apšupe"), "Apsaimniekoti", "Neapsaimniekoti")
-unique(vietas_centroidi$vieta)
+head(vietu_centroidi)
+vietu_centroidi$tips <- ifelse(vietu_centroidi$vieta %in% c("Ģipka", "Apšupe"), "Apsaimniekoti", "Neapsaimniekoti")
+unique(vietu_centroidi$vieta)
 
 
 
-
-ggplot() +
-  geom_sf(data = latvija_sf, fill = "white", color = "black") +
-  geom_sf(data = vietas_centroidi, aes(color = vieta), size = 3) +
-  labs(title = "Pētijuma vietu izvieotjums Latvijas teritorijā", legend( shape = )) +
-  theme_minimal()
+#Kopēja ------------------------------
 
 
 ggplot() +
   geom_sf(data = latvija_sf, fill = "white", color = "black") +
-  geom_sf(data = vietas_centroidi, aes(color = vieta, shape = tips), size = 5) +  
+  geom_sf(data = vietu_centroidi, aes(color = vieta, shape = tips), size = 5) +  
   scale_color_manual(values = c("#D81B60", "#FFC107", "#004D40", "#1E88E5"), 
                      name = "Pētījuma vieta") +
   scale_shape_manual(values = c(16, 15),  # piemēram: aplis, trīsstūris, kvadrāts
@@ -79,6 +74,34 @@ ggplot() +
     legend.title = element_text(size = 16),
     legend.text = element_text(size = 15)
   )
+
+
+
+# Katrai vietai ----------------------
+
+unique(vietas_centroidi$vieta)
+vieta_punkts <- vietu_centroidi %>% filter(vieta == "Ģipka")
+
+vieta_karte <- ggplot() +
+  geom_sf(data = latvija_sf, fill = "white", color = "black") +
+  geom_sf(data = vieta_punkts, aes(color = vieta, shape = tips), size = 2) +
+  scale_color_manual(values = c("Ģipka" = "#FFC107"), name = NULL) +
+  scale_shape_manual(values = c(16, 15), name = NULL) +
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill = NA, color = NA),
+    plot.background = element_rect(fill = NA, color = NA),
+    legend.position = "none"
+  )
+
+vieta_karte
+
+ggsave("karte_caurs.png", 
+       plot = vieta_karte,
+       bg = "transparent",
+       width = 428 / 600,
+       height = 754 / 600,
+       dpi = 600)
 
 
 
