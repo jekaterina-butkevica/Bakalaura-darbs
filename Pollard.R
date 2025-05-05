@@ -8,6 +8,7 @@ if(!require(EnvStats)) install.packages("EnvStats")
 # Dati ----
 TDataset <- read_excel("uzskaisu_dati.xlsx", sheet = "Noverojumi")
 summary(TDataset)
+TDataset <- TDataset[!TDataset$josla == 4,] # Noņemt nov. rpus Pollarda telpas
 TDataset <- TDataset[!is.na(TDataset$uzsk_ID),]  #Noņem tukšās rindas
 dim(TDataset)
 
@@ -143,7 +144,7 @@ for (izveleta_suga in sugas) {
   
   # Grafiks
   p <- ggplot(suga_dati, aes(x = datums, y = skaits, group = vieta, color = vieta)) +
-    geom_smooth(method = "loess", se = FALSE, size = 1.5) +
+    geom_line(size = 1.5) +
     geom_point(size = 4) +
     scale_x_date(
       breaks = sort(unique(suga_dati$datums)),
