@@ -265,10 +265,8 @@ TNov_pa_trans_j_w <- reshape(TNov_pa_trans_j,
 
 # Sakārtot joslu kolonnas pareizā secībā
 colnames(TNov_pa_trans_j_w)
-TNov_pa_trans_j_w <- TNov_pa_trans_j_w %>% select(Jday, uzsk_ID, trans_kods, latviskais, 
+TNov_pa_trans_j_w <- TNov_pa_trans_j_w %>% select(uzsk_ID, trans_kods, latviskais, 
                                                   Det.1, Det.2, Det.3, Det.4)
-
-TNov_pa_trans_j_w <- TNov_pa_trans_j_w[,-4]
 
 names(TNov_pa_trans_j_w)[4:7] <- c("J50", "J150", "J250", "Jtalak")
 TNov_pa_trans_j_w[is.na(TNov_pa_trans_j_w)] <- 0
@@ -303,9 +301,8 @@ dim(transektes_uzsk)
 
 # savienojam visu punktu visas uzskaites (arī nenotikušās) ar notikušo datiem
 Tpilnais <- merge(transektes_uzsk, Tpilnais, by=c("trans_kods", "uzsk_ID"), all.x=TRUE, sort=FALSE)
-Tpilnais <- Tpilnais[order(pilnais$Punkta_ID, pilnais$uzskaites_ID, pilnais$Seanss, pilnais$Reize),]
-head(pilnais)
-dim(pilnais)
+head(Tpilnais)
+dim(Tpilnais)
 
 
 #Pārbaudīt, vai uzskaišu reižu skaits ir vienāds.
@@ -354,7 +351,7 @@ head(yearlySiteCovs(TVisiudfGDS),12)
 
 
 
-### Nulles modelis ----
+## Nulles modelis ----
 m0hal <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
                     K=TK, unitsOut=TunitsOut)
 summary(m0hal)
@@ -367,7 +364,7 @@ backTransform(m0hal, type="det")
 
 plot(function(x) gxhn(x, sigma = confint(backTransform(m0hal, type = "det"))[1,2]), 
      0, 4, col = gray(0.7),
-     xlab = "Attālums (josla)", ylab = "Detection probability",
+     xlab = "Attālums (m)", ylab = "Detection probability",
      ylim = c(0, 1))
 plot(function(x) gxhn(x, sigma=confint(backTransform(m0hal, type="det"))[1,1]), 0, 6, add=TRUE, col=gray(0.7))
 plot(function(x) gxhn(x, sigma=backTransform(m0hal, type="det")@estimate), 0, 6, add=TRUE)
@@ -375,8 +372,34 @@ plot(function(x) gxhn(x, sigma=backTransform(m0hal, type="det")@estimate), 0, 6,
 
 
 
+## Temperatūras modelis -----
+m_temp_hal <- gdistsamp(~1, ~temp_vid -1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
+                        K=TK, unitsOut=TunitsOut)
+summary(m_temp_hal) # Pieejamība nav būtiska
 
 
 
+## Veja modelis -----
+m_vejs_hal <- gdistsamp(~1, ~vej_atr_vid -1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
+                            K=TK, unitsOut=TunitsOut)
+summary(m_vejs_hal) # Pieejamība ir būtiskā
+
+
+
+
+## pļaušanas modelis ----
+m_plausana_hal <- gdistsamp(~1, ~plausana -1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
+                   K=TK, unitsOut=TunitsOut)
+summary(m_plausana_hal) # Pieejamība nav būtiskā
+
+
+
+# Lielais modelis
+m_big_hal <- gdistsamp(~(vieta-1) +(kust_int-1) + maks_stavu_sk + maks_ziedu_sk, 
+                       ~Jday + ziedi_sum + temp_vid + apg_vid + (traucejumi-1), 
+                       ~veg_augst_vid + stavu_sk + temp_vid, 
+                       TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
+                       K=TK, unitsOut=TunitsOut)
+summary(m_big_hal) # Pieejamība ir būtiskā
 
 
