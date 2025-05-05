@@ -26,7 +26,7 @@ kemeri_trans <- TDataset %>%
 # Jauna datu tabula ar 39 rindiņām
 kemeri_3 <- tibble(
   vieta = "Ķemeri",
-  uzskaite = 3,
+  uzsk_ID = 3,
   trans_kods = kemeri_trans
 )
 TDataset_pilnais <- bind_rows(TDataset, kemeri_3)
