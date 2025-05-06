@@ -177,10 +177,11 @@ for (izveleta_suga in sugas) {
 
 
 
-
-
-
-
+# Kopējie sugu skaiti pa vietām -------------------------------
+sugas_kopsavilkums <- TDataset_pilnais %>%
+  group_by(latviskais, vieta) %>%
+  summarise(skaits = n(), .groups = "drop") %>%
+  pivot_wider(names_from = vieta, values_from = skaits, values_fill = 0)
 
 
 

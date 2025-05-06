@@ -4,7 +4,7 @@ if(!require(lubridate)) install.packages("lubridate")
 if(!require(dplyr)) install.packages("dplyr")
 if(!require(tidyr)) install.packages("tidyr")
 if(!require(unmarked)) install.packages("unmarked")
-
+if(!require(MASS)) install.packages("MASS")
 
 # Dati -----------------------------------
 orig_TDataset <- read_excel("uzskaisu_dati.xlsx", sheet = "Noverojumi")
@@ -189,10 +189,6 @@ table(TUzskaites$trans_kods) # viur jābūt 6
 
 
 
-
-
-
-
 # Tabula "Vietas" ----------------------------
 TVietas <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
 
@@ -322,14 +318,14 @@ dim(TY) # 119 transektes x 24 (4 joslas * 6 uzskaitēs)
 
 
 
-# Modelēšana (visas zuvedības) ----------
+# Modelēšana (visas uzvedības) ----------
 
 #Modeļa iestatījumi
 R = 119 #transekšu skaits. (Tikai Ģipka un Apšupe)
 T <- 6  # 6 atkārtotas uzskaites
 garums <- 100
 TK=100 #	An integer value specifying the upper bound used in the integration.
-Tdist.breaks <- c(0, 0.5, 1.5, 2.5, 10)
+Tdist.breaks <- c(0, 0.5, 1.5, 2.5, 7)
 numDistClasses <- length(Tdist.breaks) - 1  # = 4
 
 Tmixture="P"
@@ -371,6 +367,96 @@ plot(function(x) gxhn(x, sigma=backTransform(m0hal, type="det")@estimate), 0, 6,
 
 
 
+## Mēģinu iegūt aplesto indivīdu skaitu --------
+
+Tsugasdati$kopa <- rowSums(Tsugasdati[, c("J50", "J150", "J250", "Jtalak")], na.rm = TRUE)
+
+
+
+#Var aplēst sakitu katrai transektei atsevīšķi balstoties uz viedējo konstatēšanas
+# iespēju starp transektem (neņem vērā individuālas atširības)
+
+
+sigma_hat <- backTransform(m0hal, type = "det")@estimate # Izņemt det parametru - sigmu
+
+midpoints <- (head(Tdist.breaks, -1) + tail(Tdist.breaks, -1)) / 2 #joslu robežas viduspunkti
+
+p_joslas <- gxhn(midpoints, sigma_hat) # KOnst. varb katrai joslai (tā kā gxhn darbojas pēc attāluma)
+
+
+joslas_platums <- diff(Tdist.breaks) # Svarot pēc joslas platības
+p_avg <- sum(p_joslas * joslas_platums) / sum(joslas_platums)
+
+# Pieņemsim, ka novērotais skaits konkrētā transektē = 10
+Tsugasdati$aplestais_skaits <- Tsugasdati$kopa / p_avg
+
+
+
+
+##  Bootstrap prognoze -----------
+# Aplēsts skaits visai pētījuma teitorijai
+
+# 1. Funkcija, kas trenē modeli un aprēķina vērtību (piemēram, abundance)
+bootstrap_fun <- function(data) {
+  # Izveido jaunu datu apakškopu ar nejaušu atkārtotu izvēli (resampling)
+  i <- sample(1:nrow(data@y), replace = TRUE)
+  umf_resampled <- data[i, ]
+  
+  # Pārtrenē modeli
+  m_boot <- gdistsamp(lambdaformula = ~1, phiformula = ~1, pformula = ~1, 
+                      data = umf_resampled, keyfun = "halfnorm", output = "abund")
+  
+  # Atgriež, piemēram, vidējo paredzēto abundanci
+  return(sum(predict(m_boot, type = "lambda")$Predicted))
+}
+
+# 2. Izpildi vairākas bootstrap replikācijas
+set.seed(123)
+boot_results <- replicate(100, bootstrap_fun(TVisiudfGDS))  # 100 bootstrap replikācijas
+
+# 3. Aprēķini ticamības intervālus
+quantile(boot_results, probs = c(0.025, 0.975))  # 95% CI
+
+
+
+
+##  Bootstrap prognoze pa vietam ---------------------
+bootstrap_fun <- function(data) {
+  i <- sample(1:nrow(data@y), replace = TRUE)
+  umf_resampled <- data[i, ]
+  
+  m_boot <- gdistsamp(lambdaformula = ~vieta, phiformula = ~1, pformula = ~1,
+                      data = umf_resampled, keyfun = "halfnorm", output = "abund")
+  
+  pred <- predict(m_boot, type = "lambda")$Predicted
+  vietas <- data@siteCovs$vieta[i]  # atkārtotās vietas
+  
+  df <- data.frame(vieta = vietas, pred = pred)
+  df_sum <- aggregate(pred ~ vieta, data = df, sum)
+  
+  return(df_sum)
+}
+
+set.seed(123)
+boot_list <- replicate(100, bootstrap_fun(TVisiudfGDS), simplify = FALSE)
+
+# Apvieno visus rezultātus vienā datu tabulā
+boot_df <- bind_rows(boot_list, .id = "replicate")
+
+# Aprēķini 95% intervālu katrai vietai
+boot_df %>%
+  group_by(vieta) %>%
+  summarise(
+    lower = quantile(pred, 0.025),
+    upper = quantile(pred, 0.975),
+    mean  = mean(pred)
+  )
+
+
+
+
+
+
 
 ## Temperatūras modelis -----
 m_temp_hal <- gdistsamp(~1, ~temp_vid -1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
@@ -379,10 +465,16 @@ summary(m_temp_hal) # Pieejamība nav būtiska
 
 
 
+
+
+
 ## Veja modelis -----
 m_vejs_hal <- gdistsamp(~1, ~vej_atr_vid -1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
                             K=TK, unitsOut=TunitsOut)
 summary(m_vejs_hal) # Pieejamība ir būtiskā
+
+
+
 
 
 
