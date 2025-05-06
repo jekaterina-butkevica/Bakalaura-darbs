@@ -387,13 +387,35 @@ p_joslas <- gxhn(midpoints, sigma_hat) # KOnst. varb katrai joslai (tā kā gxhn
 joslas_platums <- diff(Tdist.breaks) # Svarot pēc joslas platības
 p_avg <- sum(p_joslas * joslas_platums) / sum(joslas_platums)
 
-# Pieņemsim, ka novērotais skaits konkrētā transektē = 10
+# Sakita aplēses
 Tsugasdati$aplestais_skaits <- Tsugasdati$kopa / p_avg
 
+#pievienot vietu
+Tsugasdati$vieta <- ifelse(grepl("^K", Tsugasdati$trans_kods), "Ķemeri", 
+                           ifelse(grepl("^A", Tsugasdati$trans_kods), "Apšupe", "Ģipka"))
+
+
+ggplot(Tsugasdati, aes(x = vieta, y = aplestais_skaits, fill = vieta, color = vieta)) +
+  geom_boxplot(outlier.shape = NA, width = 0.4, alpha = 0.4) +    
+  geom_jitter(width = 0.1, height = 0, alpha = 0.7, size = 4) +
+  stat_summary(fun = mean, geom = "point", shape = 21, size = 5, colour = "black") +
+  stat_n_text() +
+  scale_y_continuous(
+    limits = c(0, NA),
+    breaks = seq(0, max(Tsugasdati$aplestais_skaits) + 2, by = 1)) +
+  theme_minimal(base_size = 14) +
+  labs(x = "Pētījuma vieta", y = "Pollarda pārpilnības indekss", title = izveleta_suga)
+
+ 
 
 
 
-##  Bootstrap prognoze -----------
+
+
+
+
+
+##  Bootstrap prognoze --max()##  Bootstrap prognoze -----------
 # Aplēsts skaits visai pētījuma teitorijai
 
 # 1. Funkcija, kas trenē modeli un aprēķina vērtību (piemēram, abundance)
