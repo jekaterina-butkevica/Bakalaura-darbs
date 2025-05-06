@@ -325,7 +325,7 @@ R = 119 #transekšu skaits. (Tikai Ģipka un Apšupe)
 T <- 6  # 6 atkārtotas uzskaites
 garums <- 100
 TK=100 #	An integer value specifying the upper bound used in the integration.
-Tdist.breaks <- c(0, 0.5, 1.5, 2.5, 7)
+Tdist.breaks <- c(0, 0.5, 1.5, 2.5, 4)
 numDistClasses <- length(Tdist.breaks) - 1  # = 4
 
 Tmixture="P"
@@ -404,7 +404,7 @@ ggplot(Tsugasdati, aes(x = vieta, y = aplestais_skaits, fill = vieta, color = vi
     limits = c(0, NA),
     breaks = seq(0, max(Tsugasdati$aplestais_skaits) + 2, by = 1)) +
   theme_minimal(base_size = 14) +
-  labs(x = "Pētījuma vieta", y = "Pollarda pārpilnības indekss", title = izveleta_suga)
+  labs(x = "Pētījuma vieta", y = "Pollarda pārpilnības indekss", title = Tsuga)
 
  
 
