@@ -98,6 +98,21 @@ for (izveleta_suga in sugas) {
 
 
 
+kapostu_pindekss <- TDataset_pilnais %>%
+  filter(latviskais == "Kāpostu baltenis") %>%
+  group_by(vieta, trans_kods) %>%
+  summarise(skaits = n(), .groups = "drop")
+
+
+# Salīdzināt grupas 
+kruskal.test(skaits ~ vieta, data = kapostu_pindekss)
+library(rstatix)
+dunn_test(skaits~vieta,data=kapostu_pindekss)
+
+
+
+
+
 
 
 
@@ -183,7 +198,7 @@ sugas_kopsavilkums <- TDataset_pilnais %>%
   summarise(skaits = n(), .groups = "drop") %>%
   pivot_wider(names_from = vieta, values_from = skaits, values_fill = 0)
 
-
+sugas_kopsavilkums[sugas_kopsavilkums$latviskais == "Kāpostu baltenis",]
 
 
 
