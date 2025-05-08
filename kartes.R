@@ -53,7 +53,7 @@ vietu_centroidi <- st_transform(vietu_centroidi, crs = st_crs(latvija_sf))
 
 
 head(vietu_centroidi)
-vietu_centroidi$tips <- ifelse(vietu_centroidi$vieta %in% c("Ģipka", "Apšupe"), "Apsaimniekoti", "Neapsaimniekoti")
+vietu_centroidi$tips <- ifelse(vietu_centroidi$vieta %in% c("Ģipka", "Apšupe"), "Saimnieciskie", "Aizsargātie")
 unique(vietu_centroidi$vieta)
 
 
@@ -67,7 +67,7 @@ ggplot() +
   scale_color_manual(values = c("#D81B60", "#FFC107", "#004D40", "#1E88E5"), 
                      name = "Pētījuma vieta") +
   scale_shape_manual(values = c(16, 15),  # piemēram: aplis, trīsstūris, kvadrāts
-                     name = "Mežu tips") +
+                     name = "Apsaimniekošanas grupa") +
   theme_minimal() +
   theme(
     plot.title = element_text(size = 23, face = "bold"), 
