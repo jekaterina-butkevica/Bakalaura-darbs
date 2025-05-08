@@ -5,6 +5,7 @@ if(!require(dplyr)) install.packages("dplyr")
 if(!require(tidyr)) install.packages("tidyr")
 if(!require(unmarked)) install.packages("unmarked")
 if(!require(MASS)) install.packages("MASS")
+if(!require(ggplot2)) install.packages("ggplot2")
 
 # Dati -----------------------------------
 orig_TDataset <- read_excel("uzskaisu_dati.xlsx", sheet = "Noverojumi")
@@ -125,6 +126,102 @@ ggplot(Dist_Dataset, aes(josla, fill = vieta)) +
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Y tabula visas uzvedibas kopā -------------
+colnames(Dist_Dataset)
+
+# Summējam katrā transektē veiktos novērojumus pa attāluma joslām
+TNov_pa_trans_j <- data.frame(Dist_Dataset) %>%
+  group_by(uzsk_ID, trans_kods, latviskais, josla) %>%
+  summarise(Det=n())
+TNov_pa_trans_j <- data.frame(TNov_pa_trans_j)
+
+# Platais formāts (identifikācijas lietas, suga, novērojumu skaits pa joslām)
+TNov_pa_trans_j_w <- reshape(TNov_pa_trans_j, 
+                             idvar=c("uzsk_ID", "trans_kods", "latviskais"), 
+                             timevar="josla", direction="wide")
+
+# Sakārtot joslu kolonnas pareizā secībā
+colnames(TNov_pa_trans_j_w)
+TNov_pa_trans_j_w <- TNov_pa_trans_j_w %>% select(uzsk_ID, trans_kods, latviskais, 
+                                                  Det.1, Det.2, Det.3, Det.4)
+
+names(TNov_pa_trans_j_w)[4:7] <- c("J50", "J150", "J250", "Jtalak")
+TNov_pa_trans_j_w[is.na(TNov_pa_trans_j_w)] <- 0
+head(TNov_pa_trans_j_w)
+
+
+# Izvēlēties sugu
+unique(TNov_pa_trans_j_w$latviskais)
+
+Tsuga <- "Kāpostu baltenis"
+
+# Atlasām mūs interesējošo sugu novērojumus
+Tsugasdati <- TNov_pa_trans_j_w[TNov_pa_trans_j_w$latviskais==Tsuga,]
+head(Tsugasdati)
+dim(Tsugasdati)
+
+
+# Savienojam transektes, kur suga tika novērota, ar pārējām
+
+notikusas_uzskaites=Dist_Dataset %>% 
+  dplyr::select(trans_kods,uzsk_ID,Jday) %>% 
+  distinct() %>% 
+  arrange(trans_kods,uzsk_ID)
+
+reizem=expand.grid(trans_kods=levels(factor(Dist_Dataset$trans_kods)),
+                   uzsk_ID=1:6)
+
+Tpilnais <- merge(notikusas_uzskaites, Tsugasdati, by=c("trans_kods", "uzsk_ID"), 
+                  all.x=TRUE, sort=TRUE)
+Tpilnais=Tpilnais %>% 
+  dplyr::select(trans_kods,uzsk_ID,J50,J150,J250,Jtalak)
+Tpilnais[is.na(Tpilnais)] <- 0
+
+Tpilnais=Tpilnais %>% 
+  full_join(reizem,by=c("trans_kods","uzsk_ID")) %>% 
+  arrange(trans_kods,uzsk_ID)
+
+# radām tabulu, kurā katram punktam ir visas teorētiski iespējamās uzskaites 
+transektes <- sort(unique(Tpilnais$trans_kods))
+transektes_uzsk <- data.frame(expand.grid(trans_kods = transektes, uzsk_ID = 1:6))
+
+transektes_uzsk <- transektes_uzsk[order(transektes_uzsk$trans_kods, transektes_uzsk$uzsk_ID),] 
+head(transektes_uzsk)
+dim(transektes_uzsk)
+
+# savienojam visu punktu visas uzskaites (arī nenotikušās) ar notikušo datiem
+Tpilnais <- merge(transektes_uzsk, Tpilnais, by=c("trans_kods", "uzsk_ID"), all.x=TRUE, sort=FALSE)
+head(Tpilnais)
+dim(Tpilnais)
+
+
+#Pārbaudīt, vai uzskaišu reižu skaits ir vienāds.
+ggplot(Tpilnais, aes(trans_kods,)) + geom_histogram(,stat="count")
+
+
+# Tauriņu tabula satur izvēlētās sugas novērojumu datus katrā punktā, sadalītus pa attāluma joslām
+taurini <- Tpilnais
+head(taurini)
+TY <- reshape(taurini, v.names=c("J50", "J150", "J250", "Jtalak"), idvar="trans_kods", timevar="uzsk_ID", direction="wide")
+head(TY)
+TY <- subset(TY, select=c(-trans_kods))
+dim(TY) # 119 transektes x 24 (4 joslas * 6 uzskaitēs)
+
+
 # Tabula "Uzskaites"  -----------------------
 # Veidojam atsevišķu tabulu ar visām transektēm un uzskaites reizēm, lai tā kalpotu kā skelets
 transektes <- sort(unique(Dist_Dataset$trans_kods))
@@ -176,18 +273,10 @@ TUzskaites <- bind_rows(TUzskaites, Kemeri_1_tuksas_rindas)
 
 
 table(TUzskaites$trans_kods) # viur jābūt 6
+table(table(TUzskaites$trans_kods))
 
-
-
-
-
-
-
-
-
-
-
-
+TUzskaites=TUzskaites %>% 
+  arrange(trans_kods,uzsk_ID)
 
 # Tabula "Vietas" ----------------------------
 TVietas <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
@@ -221,7 +310,8 @@ maks_ziedi <- Dist_Dataset %>%
   summarise(maks_ziedu_sk = max(ziedi_sum, na.rm = TRUE))
 
 TVietas <- TVietas %>%
-  left_join(maks_ziedi, by = "trans_kods")
+  left_join(maks_ziedi, by = "trans_kods") %>% 
+  arrange(trans_kods)
 
 
 
@@ -245,83 +335,10 @@ Dist_Dataset <- bind_rows(Dist_Dataset, kemeri_3)
 
 
 
-#Y tabula visas uzvedibas kopā -------------
-colnames(Dist_Dataset)
-
-# Summējam katrā transektē veiktos novērojumus pa attāluma joslām
-TNov_pa_trans_j <- data.frame(Dist_Dataset) %>%
-  group_by(uzsk_ID, trans_kods, latviskais, josla) %>%
-  summarise(Det=n())
-TNov_pa_trans_j <- data.frame(TNov_pa_trans_j)
-
-# Platais formāts (identifikācijas lietas, suga, novērojumu skaits pa joslām)
-TNov_pa_trans_j_w <- reshape(TNov_pa_trans_j, 
-                             idvar=c("uzsk_ID", "trans_kods", "latviskais"), 
-                             timevar="josla", direction="wide")
-
-# Sakārtot joslu kolonnas pareizā secībā
-colnames(TNov_pa_trans_j_w)
-TNov_pa_trans_j_w <- TNov_pa_trans_j_w %>% select(uzsk_ID, trans_kods, latviskais, 
-                                                  Det.1, Det.2, Det.3, Det.4)
-
-names(TNov_pa_trans_j_w)[4:7] <- c("J50", "J150", "J250", "Jtalak")
-TNov_pa_trans_j_w[is.na(TNov_pa_trans_j_w)] <- 0
-head(TNov_pa_trans_j_w)
-
-
-# Izvēlēties sugu
-unique(TNov_pa_trans_j_w$latviskais)
-
-Tsuga <- "Kāpostu baltenis"
-
-# Atlasām mūs interesējošo sugu novērojumus
-Tsugasdati <- TNov_pa_trans_j_w[TNov_pa_trans_j_w$latviskais==Tsuga,]
-head(Tsugasdati)
-dim(Tsugasdati)
-
-
-# Savienojam transektes, kur suga tika novērota, ar pārējām
-Tpilnais <- merge(TUzskaites, Tsugasdati, by=c("trans_kods", "uzsk_ID"), 
-                  all.x=TRUE, sort=TRUE)
-
-Tpilnais[is.na(Tpilnais)] <- 0
-
-
-# radām tabulu, kurā katram punktam ir visas teorētiski iespējamās uzskaites 
-transektes <- sort(unique(Tpilnais$trans_kods))
-transektes_uzsk <- data.frame(expand.grid(trans_kods = transektes, uzsk_ID = 1:6))
-
-transektes_uzsk <- transektes_uzsk[order(transektes_uzsk$trans_kods, transektes_uzsk$uzsk_ID),] 
-head(transektes_uzsk)
-dim(transektes_uzsk)
-
-# savienojam visu punktu visas uzskaites (arī nenotikušās) ar notikušo datiem
-Tpilnais <- merge(transektes_uzsk, Tpilnais, by=c("trans_kods", "uzsk_ID"), all.x=TRUE, sort=FALSE)
-head(Tpilnais)
-dim(Tpilnais)
-
-
-#Pārbaudīt, vai uzskaišu reižu skaits ir vienāds.
-ggplot(Tpilnais, aes(trans_kods,)) + geom_histogram(,stat="count")
-
-
-# Tauriņu tabula satur izvēlētās sugas novērojumu datus katrā punktā, sadalītus pa attāluma joslām
-taurini <- Tpilnais[,c(1,2,28:31)]
-head(taurini)
-TY <- reshape(taurini, v.names=c("J50", "J150", "J250", "Jtalak"), idvar="trans_kods", timevar="uzsk_ID", direction="wide")
-head(TY)
-TY <- subset(TY, select=c(-trans_kods))
-dim(TY) # 119 transektes x 24 (4 joslas * 6 uzskaitēs)
-
-
-
-
-
-
 # Modelēšana (visas uzvedības) ----------
 
 #Modeļa iestatījumi
-R = 119 #transekšu skaits. (Tikai Ģipka un Apšupe)
+R = 119 #transekšu skaits. 
 T <- 6  # 6 atkārtotas uzskaites
 garums <- 100
 TK=100 #	An integer value specifying the upper bound used in the integration.
@@ -332,7 +349,17 @@ Tmixture="P"
 TunitsOut="ha"
 Toutput="density"
 
-# Visām sugām
+# izvēlētajai sugai
+
+
+#matricu sakārtošana
+
+
+
+
+
+
+
 TVisiudfGDS<-unmarkedFrameGDS(y=TY, 
                               siteCovs=TVietas,
                               dist.breaks=Tdist.breaks,
@@ -345,12 +372,19 @@ TVisiudfGDS<-unmarkedFrameGDS(y=TY,
 summary(TVisiudfGDS)
 head(yearlySiteCovs(TVisiudfGDS),12)
 
+summary(TVietas)
 
 
 ## Nulles modelis half norm ----
-m0hal <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                    K=TK, unitsOut=TunitsOut)
+m0hal <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="hazard", output=Toutput, mixture=Tmixture, 
+                   K=TK, unitsOut=TunitsOut)
 summary(m0hal)
+m1hal <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", 
+                   K=TK, unitsOut=TunitsOut)
+summary(m1hal)
+m2hal <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="hazard", output=Toutput, mixture="ZIP", 
+                   K=TK, unitsOut=TunitsOut)
+summary(m2hal)
 
 
 backTransform(m0hal, type="lambda")
@@ -369,7 +403,7 @@ plot(function(x) gxhn(x, sigma=backTransform(m0hal, type="det")@estimate), 0, 6,
 
 ## Mēģinu iegūt aplesto indivīdu skaitu --------
 
-
+skaiti=unmarked::predict(m0hal,type="lambda") #vidējais skaits
 
 
 #Var aplēst sakitu katrai transektei atsevīšķi balstoties uz viedējo konstatēšanas
@@ -414,7 +448,7 @@ ggplot(Noverojumi, aes(x = vieta, y = aplestais_skaits, fill = vieta, color = vi
   geom_boxplot(outlier.shape = NA, width = 0.4, alpha = 0.4) +    
   geom_jitter(width = 0.1, height = 0, alpha = 0.7, size = 4) +
   stat_summary(fun = mean, geom = "point", shape = 21, size = 5, colour = "black") +
-  stat_n_text() +
+  EnvStats::stat_n_text() +
   scale_y_continuous(
     limits = c(0, NA),
     breaks = seq(0, max(Noverojumi$aplestais_skaits) + 2, by = 1)) +
@@ -463,6 +497,57 @@ boot_df %>%
   )
 
 
+# Modelis ar vietam -----
+m_vieta_hal <- gdistsamp(~vieta+maks_stavu_sk+kust_int, ~1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
+                   K=TK, unitsOut=TunitsOut)
+summary(m_vieta_hal)
+
+skaiti=unmarked::predict(m_vieta_hal,type="lambda") 
+skaiti
+
+
+## DoY modelis -----
+summary(TVisiudfGDS)
+m_doy_hal <- gdistsamp(~1, # lambda = abundance
+                       ~1+I(scale(Jday)^2)+scale(temp_vid)+I(scale(temp_vid)^2)+scale(vej_atr_vid)+traucejumi, # phi = availability
+                       ~1, # pi = detection
+                       TVisiudfGDS, 
+                       keyfun ="hazard", 
+                       output=Toutput, 
+                       mixture="NB",
+                       K=TK, 
+                       unitsOut=TunitsOut)
+summary(m_doy_hal) # Pieejamība nav būtiska
+
+predict(m_doy_hal,type="lambda")/20
+
+
+newdata=expand.grid(#vieta=c("Apšupe","Ģipka","Ķemeri")
+                    Jday=seq(160,250,10)
+                    ,vej_atr_vid=seq(0,5,1)
+                    ,temp_vid=seq(13,35,5)
+                    )
+a=as.data.frame(predict(m_doy_hal,type="phi",newdata))
+kraa=cbind(newdata,a)
+ggplot(kraa,aes(Jday,Predicted,ymin=lower,ymax=upper))+
+  geom_ribbon(alpha=0.5)+
+  geom_line()+
+  scale_y_continuous(limits = c(0,1))+
+  theme_bw()+
+  facet_grid(vej_atr_vid~temp_vid)
+
+
+m_doy1_hal <- gdistsamp(~1, ~scale(Jday)+I(scale(Jday)^2), ~1, TVisiudfGDS, keyfun ="hazard", output=Toutput, mixture=Tmixture, 
+                       K=TK, unitsOut=TunitsOut)
+summary(m_doy1_hal) # Pieejamība nav būtiska
+newdata=expand.grid(vieta=c("Apšupe","Ģipka","Ķemeri"),
+                    Jday=seq(100,250,10))
+a1=as.data.frame(predict(m_doy1_hal,type="phi",newdata))
+kraa1=cbind(newdata,a1)
+ggplot(kraa1,aes(Jday,Predicted,ymin=lower,ymax=upper))+
+  geom_ribbon(alpha=0.5)+
+  geom_line()+
+  facet_wrap(~vieta)
 
 
 
