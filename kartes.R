@@ -4,34 +4,36 @@ if(!require(ggplot2)) install.packages("ggplot2")
 if(!require(dplyr)) install.packages("dplyr")
 if(!require(sf)) install.packages("sf")
 if(!require(rnaturalearth)) install.packages("rnaturalearth")
-if(!require(rnaturalearthdata)) install.packages("rnaturalearthdata")
+
 
 
 # Dati ----
-Vietas <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
-unique(Vietas$vieta)
+kartes_Vietas <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
+kartes_Vietas <-  kartes_Vietas[-101,]
+dim(kartes_Vietas)
+unique(kartes_Vietas$vieta)
 
 
 
 # Transekšu centroīdi ----
-head(Vietas) # strūktūra
-class(Vietas$x_sakums) # pārbaudīt mainīga klasi
+head(kartes_Vietas) # strūktūra
+class(kartes_Vietas$x_sakums) # pārbaudīt mainīga klasi
 
-Vietas <- Vietas %>% # samainīt visus uz numeric
+kartes_Vietas <- kartes_Vietas %>% # samainīt visus uz numeric
   mutate(across(c(x_sakums, y_sakums, x_beigas, y_beigas), as.numeric))
 
-class(Vietas$x_sakums)
+class(kartes_Vietas$x_sakums)
 
 
-Vietas <- Vietas[,c(1:6)] %>%
+kartes_Vietas <- kartes_Vietas[,c(1:6)] %>%
   mutate(
-    x_vidus = (Vietas$x_sakums + Vietas$x_beigas) / 2,
-    y_vidus = (Vietas$y_sakums + Vietas$y_beigas) / 2
+    x_vidus = (kartes_Vietas$x_sakums + kartes_Vietas$x_beigas) / 2,
+    y_vidus = (kartes_Vietas$y_sakums + kartes_Vietas$y_beigas) / 2
   )
-head(Vietas) # strūktūra
+head(kartes_Vietas) # strūktūra
 
 
-vietu_centroidi <- Vietas %>%
+vietu_centroidi <- kartes_Vietas %>%
   group_by(vieta) %>%
   summarise(
     x_centroid = mean(x_vidus),
@@ -56,15 +58,15 @@ head(vietu_centroidi)
 vietu_centroidi$tips <- ifelse(vietu_centroidi$vieta %in% c("Ģipka", "Apšupe"), "Saimnieciskie", "Aizsargātie")
 unique(vietu_centroidi$vieta)
 
+# Centroīdi wgs formātā
+print(vietu_centroidi)
 
-
-#Kopēja ------------------------------
-
+#Kopēja plans ------------------------------
 
 ggplot() +
   geom_sf(data = latvija_sf, fill = "white", color = "black") +
   geom_sf(data = vietu_centroidi, aes(color = vieta, shape = tips), size = 5) +  
-  scale_color_manual(values = c("#D81B60", "#FFC107", "#004D40", "#1E88E5"), 
+  scale_color_manual(values = c("#D81B60", "#FFC107", "#3cc140", "#1E88E5"), 
                      name = "Pētījuma vieta") +
   scale_shape_manual(values = c(16, 15),  # piemēram: aplis, trīsstūris, kvadrāts
                      name = "Apsaimniekošanas grupa") +
@@ -75,11 +77,27 @@ ggplot() +
     legend.text = element_text(size = 15)
   )
 
+#Kopēja realitāte ------------------------------
+vietu_centroidi2 <- vietu_centroidi[!vietu_centroidi$vieta == "Šlītere",]
+vietu_centroidi2 <- vietu_centroidi2[,-3]
 
+ggplot() +
+  geom_sf(data = latvija_sf, fill = "white", color = "black") +
+  geom_sf(data = vietu_centroidi2, aes(color = vieta,), size = 5) +  
+  scale_color_manual(values = c("#D81B60", "#FFC107", "#3cc140", "#1E88E5"), 
+                     name = "Pētījuma vieta") +
+  scale_shape_manual(values = c(16, 15),  # piemēram: aplis, trīsstūris, kvadrāts
+                     name = "Apsaimniekošanas grupa") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 23, face = "bold"), 
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 15)
+  )
 
 # Katrai vietai ----------------------
 
-unique(vietas_centroidi$vieta)
+unique(vietu_centroidi$vieta)
 vieta_punkts <- vietu_centroidi %>% filter(vieta == "Ģipka")
 
 vieta_karte <- ggplot() +
