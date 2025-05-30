@@ -4,7 +4,7 @@
 
 ## Repozitorija saturs
 
-### [R komandrindas](./R/)
+### [R komandrindas](./R_komandrindas/)
 
 - **`0_visparigi.R`**
 Komandrindas rezultātu ievada sadaļas izveidei: reģistrēto sugu skaits, to sadalījums pa dzimtām, novērojumu sadalījuma attēla izveide.
@@ -17,3 +17,11 @@ Komandrindas distances analīzes veikšanai ar hierarhiskiem distances modeļiem
 
 - **`kartes.R`**
 Komandrindas bakalaura darbā un aizstāvēšanas prezentācijā iekļauto Latvijas konturkartes izveidei pētījuma dizaina demonstrācijai.
+
+
+
+### [Pollarda metode](./Pollard/)
+**[Sugu fenoloģijas līknes](./Pollard/fenologija/)**
+
+**[Pollarda līknesa_salīdzinājums](./Pollard/indeksi/)**
+
