@@ -3,6 +3,15 @@
 Šajā repozitorijā atrodami komandrindas un ievaddati, kas nepieciešami mana bakalaura darba analīžu procesa un rezultātu reproducēšanai.
 
 ## Repozitorija saturs
+### [Ievaddati](./Dati/)
+**`originalie_dati.xlsx`**  Petījuma analīzētie dati par dienastauriņiem novērojumiem.
+
+Datu fails satur sēkojošas lapas:
+- Noverojumi
+- Uzskaites
+- Vietas
+- Refernce
+- Lauku_skaidrojumi
 
 ### [R komandrindas](./R_komandrindas/)
 
@@ -21,7 +30,8 @@ Komandrindas bakalaura darbā un aizstāvēšanas prezentācijā iekļauto Latvi
 
 
 ### [Pollarda metode](./Pollard/)
-**[Sugu fenoloģijas līknes](./Pollard/fenologija/)**
+**[Sugu fenoloģijas līknes](./Pollards/fenologija/)**
+Mape satur uz novērojumiem balstītas fenoloģijas līknes, visām pētījumā novērotām sugam, kam ir vairāk par 2 novērojumiem. Balstās uz novērojumeim no visām joslām.
 
-**[Pollarda līknesa_salīdzinājums](./Pollard/indeksi/)**
-
+**[Pollarda līknesa_salīdzinājums](./Pollards/indeksi/)**
+Satur katrai pētījumā novērotai sugai veikto transekšu Pollarda indeksu vizuālo salīdzinājumu starp pētījuma vietām. Balstās uz novērojumiem Pollarda telpas ietvaros (1. līdz 3. josla).
