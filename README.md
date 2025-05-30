@@ -35,3 +35,13 @@ Satur uz novērojumiem balstītas fenoloģijas līknes, visām pētījumā novē
 
 Mape **[Pollarda līknesa_salīdzinājums](./Pollards/indeksi/)**
 Satur katrai pētījumā novērotai sugai veikto transekšu Pollarda indeksu vizuālo salīdzinājumu starp pētījuma vietām. Balstās uz novērojumiem Pollarda telpas ietvaros (1. līdz 3. josla).
+
+
+
+### [Kartes](.//Kartes)
+Satur bakalaura darbā un aizstavēšana izmantotās Latvijas konturkartes.
+
+
+
+### [Pētījuma dizains](.//Dizains)
+Satur attēlus, kas informē par galvēnājiem pētījuma dizaina aspektiem: uzskaites veikšanas metodes shēma un transektes un parauglaukumu izvietojuma shēma.
