@@ -61,6 +61,6 @@ Satur katrai pētījumā novērotai sugai veikto transekšu Pollarda indeksu viz
 
 
 ### [Kartes](.//Kartes)
-Satur bakalaura darbā un aizstavēšana izmantotās Latvijas konturkartes.
+Satur bakalaura darbā un aizstavēšanas prezentācijā izmantotās Latvijas konturkartes.
 
 
