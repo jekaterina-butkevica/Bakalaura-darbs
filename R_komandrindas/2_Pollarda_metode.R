@@ -7,7 +7,7 @@ if(!require(rstatix)) install.packages("rstatix")
 if(!require(tidyr)) install.packages("tidyr")
 
 # Dati ----
-Pollard_dataset <- read_excel("dati/originalie_dati.xlsx", sheet = "Noverojumi")
+Pollard_dataset <- read_excel("Dati/originalie_dati.xlsx", sheet = "Noverojumi")
 summary(Pollard_dataset)
 Pollard_dataset <- Pollard_dataset[!is.na(Pollard_dataset$uzsk_ID),]  #Noņem tukšās rindas
 dim(Pollard_dataset)

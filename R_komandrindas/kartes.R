@@ -8,7 +8,7 @@ if(!require(rnaturalearth)) install.packages("rnaturalearth")
 
 
 # Dati ----
-kartes_Vietas <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
+kartes_Vietas <- read_excel("Dati/originalie_dati.xlsx", sheet = "Vietas")
 kartes_Vietas <-  kartes_Vietas[-101,]
 dim(kartes_Vietas)
 unique(kartes_Vietas$vieta)
