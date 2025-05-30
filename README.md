@@ -13,6 +13,13 @@ Datu fails satur sēkojošas lapas:
 - Refernce
 - Lauku_skaidrojumi
 
+
+
+### [Pētījuma dizains](.//Dizains)
+Satur attēlus, kas informē par galvēnājiem pētījuma dizaina aspektiem: uzskaites veikšanas metodes shēma un transektes un parauglaukumu izvietojuma shēma.
+
+
+
 ### [R komandrindas](./R_komandrindas/)
 
 - **`0_visparigi.R`**
@@ -38,10 +45,22 @@ Satur katrai pētījumā novērotai sugai veikto transekšu Pollarda indeksu viz
 
 
 
+### [Rezultāti](.//Rezultati)
+Šī mape satur attēlus ar galvēnajiem pētījuma rezultātiem, kā arī attēlus, kas analīzēti diskusijas sadaļā.
+
+- sugu_noverojumi.png
+- Pollard_index_Pieris_brassicae.png
+- distances_funkcija.png
+- aplestais_noverotais_salidzinajums.png
+- pieejamiba_sezona.png
+- pollard_logs_temp_apg.png
+- pollard_vejs.png
+- Pieris_brassicase_fenologija.png
+- Pierisspp_pierisbrass_barplot.png
+
+
+
 ### [Kartes](.//Kartes)
 Satur bakalaura darbā un aizstavēšana izmantotās Latvijas konturkartes.
 
 
-
-### [Pētījuma dizains](.//Dizains)
-Satur attēlus, kas informē par galvēnājiem pētījuma dizaina aspektiem: uzskaites veikšanas metodes shēma un transektes un parauglaukumu izvietojuma shēma.
