@@ -2,3 +2,12 @@
 
 Šajā repozitorijā atrodami komandrindas un ievaddati, kas nepieciešami mana bakalaura darba analīžu procesa un rezultātu reproducēšanai.
 
+## Repozitorija saturs
+
+### R skripti
+
+- **`0_visparigi.R`**
+- **`1_Pollarda_metode.R`**
+- **`3_distances_analize.R`**
+
+- **`kartes.R`**
