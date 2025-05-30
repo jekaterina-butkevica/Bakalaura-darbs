@@ -7,7 +7,7 @@ if(!require(rstatix)) install.packages("rstatix")
 if(!require(tidyr)) install.packages("tidyr")
 
 # Dati ----
-Pollard_dataset <- read_excel("originalie_dati.xlsx", sheet = "Noverojumi")
+Pollard_dataset <- read_excel("dati/originalie_dati.xlsx", sheet = "Noverojumi")
 summary(Pollard_dataset)
 Pollard_dataset <- Pollard_dataset[!is.na(Pollard_dataset$uzsk_ID),]  #Noņem tukšās rindas
 dim(Pollard_dataset)
@@ -117,7 +117,7 @@ for (izveleta_suga in sugas) {
   
   # Saglabāšana
   faila_nosaukums <- gsub("[^a-zA-Z0-9_āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]", "_", izveleta_suga)
-  faila_cels <- file.path("Pollard/fenologija", paste0(faila_nosaukums, ".png"))
+  faila_cels <- file.path("Pollards/fenologija", paste0(faila_nosaukums, ".png"))
   
   ggsave(filename = faila_cels, plot = p, width = 10, height = 6, dpi = 300, bg = "white")
 }
@@ -188,7 +188,7 @@ Pollard_dataset_pilnais_123 <- Pollard_dataset_pilnais_123[!is.na(Pollard_datase
 # Pollarda sastopamības indeksa salīdzinājums starp vietam =================================
 
 # Direktorija
-dir.create("Pollard/indeksi", recursive = TRUE)
+dir.create("Pollards/indeksi", recursive = TRUE)
 
 
 sugas <- unique(Pollard_dataset_pilnais$zinatniskais)
@@ -223,7 +223,7 @@ for (izveleta_suga in sugas) {
     labs(x = "Pētījuma vieta", y = "Pollarda sastopamības indekss", title = izveleta_suga)
   
   # Saglabā attēlu
-  ggsave(filename = file.path("Pollard/indeksi", paste0(gsub("[^a-zA-Z0-9_āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]", "_", izveleta_suga), ".png")),
+  ggsave(filename = file.path("Pollards/indeksi", paste0(gsub("[^a-zA-Z0-9_āčēģīķļņšūžĀČĒĢĪĶĻŅŠŪŽ]", "_", izveleta_suga), ".png")),
          plot = index_plot,
          width = 10,
          height = 6,
