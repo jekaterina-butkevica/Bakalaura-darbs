@@ -8,12 +8,10 @@ if(!require(MASS)) install.packages("MASS")
 if(!require(ggplot2)) install.packages("ggplot2")
 
 # Dati -----------------------------------
-orig_TDataset <- read_excel("uzskaisu_dati.xlsx", sheet = "Noverojumi")
+orig_TDataset <- read_excel("originalie_dati.xlsx", sheet = "Noverojumi")
 summary(orig_TDataset)
 Dist_Dataset <- orig_TDataset[!is.na(orig_TDataset$uzsk_ID),]  #Noņem tukšās rindas
 dim(Dist_Dataset)
-
-
 
 ## Datums -------------------------------
 Dist_Dataset$datums <- as.Date(Dist_Dataset$datums, format= "%d.%m.%Y") 
@@ -48,7 +46,16 @@ dim(Dist_Dataset)
 
 # Nevajadzīgo kolonnu dzēšana
 data.frame(Numurs = seq_along(Dist_Dataset), Kolonna = names(Dist_Dataset))
-Dist_Dataset <- Dist_Dataset[ , -c(4:20, 22:37, 40, 41, 44:46, 48:52, 55:57, 59,60)]
+Dist_Dataset <- Dist_Dataset %>%  #IESPĒJAMS ŠO VAR AIZVIEOT AR CIKLU, KAD LIEKAIS BUS IZŅEMTS NO IEVĀDES DATIEM
+  select(-laiks_sak, -laiks_beig, -laiks_vid, -trans_ilg, -temp_sak, -temp_beig,
+         -vej_atr_sak, -vej_atr_beig, -rel_mitr_sak, -rel_mitr_beig, -makon_sak,
+         -makon_beig, -apg_sak, -apg_beig, -veg_augst_sak, -veg_augst_beig,
+         -rl_ziedi_sak, -rl_ziedi_beig, -rl_augi_sak, -rl_augi_beig, -z_ziedi_sak, 
+         -z_ziedi_beig, -z_augi_sak, -z_augi_beig, -v_ziedi_sak, -v_ziedi_beig,
+         -v_augi_sak, -v_augi_beig, -a_ziedi_sak, -a_ziedi_beig, -a_augi_sak,
+         -a_augi_beig, -mitr_apst, -izmainas, -spares, -taurini, -kods, -dzimta,
+         -apaksdzimta, -gints, -vid_sparnu_pletums, -komentars, -kom_traucejumi,
+         -kom_bojajumi, -laiks_min_sak, -laiks_min_beig)
 dim(Dist_Dataset)
 
 
@@ -87,9 +94,6 @@ ggplot(Dist_Dataset, aes(traucejumi)) +
 # traucejumi bija vai nē, jo piemēram grupa "mazā", lielā varbūtība, kā nekas nebija
 # noticis. Tomēr mīnus ir tas, kā šajā pazīmē nevar atšķirt kas tieši bija par traucējumu.
 
-data.frame(Numurs = seq_along(Dist_Dataset), Kolonna = names(Dist_Dataset))
-Dist_Dataset <- Dist_Dataset[ , -8]
-
 
 Dist_Dataset <- Dist_Dataset %>% # Samazināt pļaušanas grupu skaitu
   mutate(plausana = case_when(
@@ -108,12 +112,13 @@ Dist_Dataset <- Dist_Dataset %>% # Samazināt uzvedības grupu skaitu
 
 
 
+
 # Datu pārskats -----------------
-ggplot(Dist_Dataset, aes(josla)) + 
+ggplot(Dist_Dataset[Dist_Dataset$zinatniskais == "Pieris brassicae",], aes(josla)) + 
   geom_histogram(stat="count") +
   facet_wrap(~uzvediba, nrow = 2)
 
-ggplot(Dist_Dataset, aes(josla, fill = vieta)) + 
+ggplot(Dist_Dataset[Dist_Dataset$zinatniskais == "Pieris brassicae",], aes(josla, fill = vieta)) + 
   geom_histogram(stat="count") +
   facet_wrap(~uzvediba*vieta, nrow = 2)
 # Ķemeros izteikti atšķirīgs sadalījums. Bet es zinu, ka tas tā ir tikai visiem tauriņiem kopā
@@ -124,39 +129,23 @@ ggplot(Dist_Dataset, aes(josla, fill = vieta)) +
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#Y tabula visas uzvedibas kopā -------------
+#Y tabula  -------------
 colnames(Dist_Dataset)
 
 # Summējam katrā transektē veiktos novērojumus pa attāluma joslām
 TNov_pa_trans_j <- data.frame(Dist_Dataset) %>%
-  group_by(uzsk_ID, trans_kods, latviskais, josla) %>%
+  group_by(uzsk_ID, trans_kods, zinatniskais, josla) %>%
   summarise(Det=n())
 TNov_pa_trans_j <- data.frame(TNov_pa_trans_j)
 
 # Platais formāts (identifikācijas lietas, suga, novērojumu skaits pa joslām)
 TNov_pa_trans_j_w <- reshape(TNov_pa_trans_j, 
-                             idvar=c("uzsk_ID", "trans_kods", "latviskais"), 
+                             idvar=c("uzsk_ID", "trans_kods", "zinatniskais"), 
                              timevar="josla", direction="wide")
 
 # Sakārtot joslu kolonnas pareizā secībā
 colnames(TNov_pa_trans_j_w)
-TNov_pa_trans_j_w <- TNov_pa_trans_j_w %>% select(uzsk_ID, trans_kods, latviskais, 
+TNov_pa_trans_j_w <- TNov_pa_trans_j_w %>% dplyr::select(uzsk_ID, trans_kods, zinatniskais, 
                                                   Det.1, Det.2, Det.3, Det.4)
 
 names(TNov_pa_trans_j_w)[4:7] <- c("J50", "J150", "J250", "Jtalak")
@@ -165,18 +154,17 @@ head(TNov_pa_trans_j_w)
 
 
 # Izvēlēties sugu
-unique(TNov_pa_trans_j_w$latviskais)
+unique(TNov_pa_trans_j_w$zinatniskais)
 
-Tsuga <- "Kāpostu baltenis"
+Tsuga <- "Pieris brassicae"
 
 # Atlasām mūs interesējošo sugu novērojumus
-Tsugasdati <- TNov_pa_trans_j_w[TNov_pa_trans_j_w$latviskais==Tsuga,]
+Tsugasdati <- TNov_pa_trans_j_w[TNov_pa_trans_j_w$zinatniskais==Tsuga,]
 head(Tsugasdati)
 dim(Tsugasdati)
 
 
 # Savienojam transektes, kur suga tika novērota, ar pārējām
-
 notikusas_uzskaites=Dist_Dataset %>% 
   dplyr::select(trans_kods,uzsk_ID,Jday) %>% 
   distinct() %>% 
@@ -216,10 +204,14 @@ ggplot(Tpilnais, aes(trans_kods,)) + geom_histogram(,stat="count")
 # Tauriņu tabula satur izvēlētās sugas novērojumu datus katrā punktā, sadalītus pa attāluma joslām
 taurini <- Tpilnais
 head(taurini)
+tail(taurini)
 TY <- reshape(taurini, v.names=c("J50", "J150", "J250", "Jtalak"), idvar="trans_kods", timevar="uzsk_ID", direction="wide")
 head(TY)
 TY <- subset(TY, select=c(-trans_kods))
 dim(TY) # 119 transektes x 24 (4 joslas * 6 uzskaitēs)
+summary(TY)
+
+
 
 
 # Tabula "Uzskaites"  -----------------------
@@ -231,8 +223,7 @@ tail(trans_uzsk)
 
 # No Dist_Dataset atlasām unikālus transektu aprakstus
 data.frame(Numurs = seq_along(Dist_Dataset), Kolonna = names(Dist_Dataset))
-
-TUzskaites <- Dist_Dataset[,c(1:7, 11: 29)]
+TUzskaites <- Dist_Dataset[,c(1:8, 14: 32)]
 TUzskaites <- TUzskaites %>%
   distinct(trans_kods, uzsk_ID, .keep_all = TRUE)
 
@@ -350,17 +341,7 @@ TunitsOut="ha"
 Toutput="density"
 
 # izvēlētajai sugai
-
-
-#matricu sakārtošana
-
-
-
-
-
-
-
-TVisiudfGDS<-unmarkedFrameGDS(y=TY, 
+TudfGDS<-unmarkedFrameGDS(y=TY, 
                               siteCovs=TVietas,
                               dist.breaks=Tdist.breaks,
                               numPrimary=T, 
@@ -369,35 +350,44 @@ TVisiudfGDS<-unmarkedFrameGDS(y=TY,
                               unitsIn="m",
                               tlength=rep(garums, R))
 
-summary(TVisiudfGDS)
-head(yearlySiteCovs(TVisiudfGDS),12)
+summary(TudfGDS)
+head(yearlySiteCovs(TudfGDS),12)
 
 summary(TVietas)
 
 
 ## Nulles modelis half norm ----
-m0hal <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="hazard", output=Toutput, mixture=Tmixture, 
+m0haz <- gdistsamp(~1, ~1, ~1, TudfGDS, keyfun ="hazard", output=Toutput, mixture=Tmixture, 
+                   K=TK, unitsOut=TunitsOut)
+summary(m0haz)
+m0hazNB <- gdistsamp(~1, ~1, ~1, TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", 
+                   K=TK, unitsOut=TunitsOut)
+summary(m0hazNB)
+
+
+
+m0hal <- gdistsamp(~1, ~1, ~1, TudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
                    K=TK, unitsOut=TunitsOut)
 summary(m0hal)
-m1hal <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", 
-                   K=TK, unitsOut=TunitsOut)
-summary(m1hal)
-m2hal <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="hazard", output=Toutput, mixture="ZIP", 
-                   K=TK, unitsOut=TunitsOut)
-summary(m2hal)
+m0halNB <- gdistsamp(~1, ~1, ~1, TudfGDS, keyfun ="halfnorm", output=Toutput, mixture="NB", 
+                     K=TK, unitsOut=TunitsOut)
+summary(m0halNB)
 
 
-backTransform(m0hal, type="lambda")
-confint(backTransform(m0hal, type="lambda"))
-backTransform(m0hal, type="phi")
-backTransform(m0hal, type="det")
+backTransform(m0hazNB, type="lambda")
+confint(backTransform(m0hazNB, type="lambda"))
+backTransform(m0hazNB, type="phi")
+backTransform(m0hazNB, type="det")
 
-plot(function(x) gxhn(x, sigma = confint(backTransform(m0hal, type = "det"))[1,2]), 
+plot(function(x) gxhn(x, sigma = confint(backTransform(m0hazNB, type = "det"))[1,2]), 
      0, 4, col = gray(0.7),
      xlab = "Attālums (m)", ylab = "Detection probability",
      ylim = c(0, 1))
-plot(function(x) gxhn(x, sigma=confint(backTransform(m0hal, type="det"))[1,1]), 0, 6, add=TRUE, col=gray(0.7))
-plot(function(x) gxhn(x, sigma=backTransform(m0hal, type="det")@estimate), 0, 6, add=TRUE)
+plot(function(x) gxhn(x, sigma=confint(backTransform(m0hazNB, type="det"))[1,1]), 0, 4, add=TRUE, col=gray(0.7))
+plot(function(x) gxhn(x, sigma=backTransform(m0hazNB, type="det")@estimate), 0, 4, add=TRUE)
+
+
+
 
 
 
@@ -408,19 +398,21 @@ skaiti=unmarked::predict(m0hal,type="lambda") #vidējais skaits
 
 #Var aplēst sakitu katrai transektei atsevīšķi balstoties uz viedējo konstatēšanas
 # iespēju starp transektem (neņem vērā individuālas atširības)
+m0hazNB <- gdistsamp(~1, ~1, ~1, TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", 
+                     K=TK, unitsOut=TunitsOut)
+summary(m0hazNB)
 
 
-sigma_hat <- backTransform(m0hal, type = "det")@estimate # Izņemt det parametru - sigmu
+# Parametru iegūve no modeļa
+sigma_hat <- backTransform(m0hazNB, type = "det")@estimate # Izņemt det parametru - sigmu
+scale_hat <- backTransform(m0hazNB, type = "scale")@estimate
 
+# Attalūmu joslas viduspunkti un konstatēšanas varbūtība pa joslam
 midpoints <- (head(Tdist.breaks, -1) + tail(Tdist.breaks, -1)) / 2 #joslu robežas viduspunkti
+p_joslas <- gxhaz(midpoints, sigma_hat, scale = scale_hat) # KOnst. varb katrai joslai (tā kā gxhn darbojas pēc attāluma)
 
-p_joslas <- gxhn(midpoints, sigma_hat) # KOnst. varb katrai joslai (tā kā gxhn darbojas pēc attāluma)
 
-
-joslas_platums <- diff(Tdist.breaks) # Svarot pēc joslas platības
-p_avg <- sum(p_joslas * joslas_platums) / sum(joslas_platums)
-
-# Sakita aplēses
+# Pielāgota sakita aplēses
 Noverojumi <- Tsugasdati
 Noverojumi$kopa <- rowSums(Noverojumi[, c("J50", "J150", "J250", "Jtalak")], na.rm = TRUE)
 
@@ -433,7 +425,6 @@ Noverojumi <- Noverojumi %>%
     aplestais_skaits= round(sum(aplestais_skaits)),
     .groups = "drop"
   )
-
 
 
 
@@ -463,55 +454,29 @@ ggplot(Noverojumi, aes(x = vieta, y = aplestais_skaits, fill = vieta, color = vi
 
 
 
-   
-##  Bootstrap prognoze pa vietam ---------------------
-bootstrap_fun <- function(data) {
-  i <- sample(1:nrow(data@y), replace = TRUE)
-  umf_resampled <- data[i, ]
-  
-  m_boot <- gdistsamp(lambdaformula = ~vieta, phiformula = ~1, pformula = ~1,
-                      data = umf_resampled, keyfun = "halfnorm", output = "abund")
-  
-  pred <- predict(m_boot, type = "lambda")$Predicted
-  vietas <- data@siteCovs$vieta[i]  # atkārtotās vietas
-  
-  df <- data.frame(vieta = vietas, pred = pred)
-  df_sum <- aggregate(pred ~ vieta, data = df, sum)
-  
-  return(df_sum)
-}
-
-set.seed(123)
-boot_list <- replicate(100, bootstrap_fun(TVisiudfGDS), simplify = FALSE)
-
-# Apvieno visus rezultātus vienā datu tabulā
-boot_df <- bind_rows(boot_list, .id = "replicate")
-
-# Aprēķini 95% intervālu katrai vietai
-boot_df %>%
-  group_by(vieta) %>%
-  summarise(
-    lower = quantile(pred, 0.025),
-    upper = quantile(pred, 0.975),
-    mean  = mean(pred)
-  )
-
 
 # Modelis ar vietam -----
-m_vieta_hal <- gdistsamp(~vieta+maks_stavu_sk+kust_int, ~1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                   K=TK, unitsOut=TunitsOut)
-summary(m_vieta_hal)
-
+summary(TudfGDS)
+m_vieta_hal <- gdistsamp(~vieta, # lambda = abundance
+                       ~1, # phi = availability
+                       ~1, # pi = detection
+                       TudfGDS, 
+                       keyfun ="hazard", 
+                       output=Toutput, 
+                       mixture="NB",
+                       K=TK, 
+                       unitsOut=TunitsOut)
+summary(m_vieta_hal) # Pieejamība nav būtiska
 skaiti=unmarked::predict(m_vieta_hal,type="lambda") 
 skaiti
 
 
 ## DoY modelis -----
-summary(TVisiudfGDS)
+summary(TudfGDS)
 m_doy_hal <- gdistsamp(~1, # lambda = abundance
                        ~1+I(scale(Jday)^2)+scale(temp_vid)+I(scale(temp_vid)^2)+scale(vej_atr_vid)+traucejumi, # phi = availability
                        ~1, # pi = detection
-                       TVisiudfGDS, 
+                       TudfGDS, 
                        keyfun ="hazard", 
                        output=Toutput, 
                        mixture="NB",
@@ -519,25 +484,33 @@ m_doy_hal <- gdistsamp(~1, # lambda = abundance
                        unitsOut=TunitsOut)
 summary(m_doy_hal) # Pieejamība nav būtiska
 
-predict(m_doy_hal,type="lambda")/20
+
+sh <- predict(m_doy_hal,type="lambda")/20 # skaits uz hektāru dalīt uz 20 = skaits uz transektes platību
+sp <- predict(m_doy_hal,type="phi")/20
 
 
 newdata=expand.grid(#vieta=c("Apšupe","Ģipka","Ķemeri")
                     Jday=seq(160,250,10)
                     ,vej_atr_vid=seq(0,5,1)
                     ,temp_vid=seq(13,35,5)
+                    , traucejumi =c("Ir", "Nav")
                     )
 a=as.data.frame(predict(m_doy_hal,type="phi",newdata))
 kraa=cbind(newdata,a)
-ggplot(kraa,aes(Jday,Predicted,ymin=lower,ymax=upper))+
-  geom_ribbon(alpha=0.5)+
-  geom_line()+
-  scale_y_continuous(limits = c(0,1))+
-  theme_bw()+
-  facet_grid(vej_atr_vid~temp_vid)
+ggplot(kraa, aes(Jday, Predicted, fill = traucejumi, ymin = lower, ymax = upper)) +
+  geom_ribbon(alpha = 0.5, colour = NA) +
+  geom_line(aes(color = traucejumi)) +
+  scale_fill_manual(values = c("red", "limegreen")) +
+  scale_color_manual(values = c("darkred", "darkgreen")) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_bw() +
+  facet_grid(vej_atr_vid ~ temp_vid)
 
 
-m_doy1_hal <- gdistsamp(~1, ~scale(Jday)+I(scale(Jday)^2), ~1, TVisiudfGDS, keyfun ="hazard", output=Toutput, mixture=Tmixture, 
+m_doy1_hal <- gdistsamp(~1, 
+                        ~scale(Jday)+I(scale(Jday)^2)+vieta, 
+                        ~1, 
+                        TudfGDS, keyfun ="hazard", output=Toutput, mixture=Tmixture, 
                        K=TK, unitsOut=TunitsOut)
 summary(m_doy1_hal) # Pieejamība nav būtiska
 newdata=expand.grid(vieta=c("Apšupe","Ģipka","Ķemeri"),
@@ -553,120 +526,98 @@ ggplot(kraa1,aes(Jday,Predicted,ymin=lower,ymax=upper))+
 
 
 
-## Temperatūras modelis -----
-m_temp_hal <- gdistsamp(~1, ~temp_vid -1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
+
+
+
+## Tikai dienaslaiks -----
+summary(TudfGDS)
+m_doy_hal <- gdistsamp(~1, # lambda = abundance
+                       ~1+I(scale(laiks_min_vid)^2)+scale(laiks_min_vid)+scale(Jday),
+                       ~1, # pi = detection
+                       TudfGDS, 
+                       keyfun ="hazard", 
+                       output=Toutput, 
+                       mixture="NB",
+                       K=TK, 
+                       unitsOut=TunitsOut)
+summary(m_doy_hal) # Pieejamība nav būtiska
+
+
+sh <- predict(m_doy_hal,type="lambda")/20 # skaits uz hektāru dalīt uz 20 = skaits uz transektes platību
+
+
+newdata=expand.grid(Jday=seq(160,250,10),
+                    laiks_min_vid=seq(540,1080, 120)
+                    )
+a=as.data.frame(predict(m_doy_hal,type="phi",newdata))
+kraa=cbind(newdata,a)
+ggplot(kraa, aes(Jday, Predicted, ymin = lower, ymax = upper)) +
+  geom_ribbon(alpha = 0.5, colour = NA) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_bw() +
+  facet_wrap(~laiks_min_vid)
+
+
+m_doy1_hal <- gdistsamp(~1, 
+                        ~scale(Jday)+I(scale(Jday)^2)+vieta, 
+                        ~1, 
+                        TudfGDS, keyfun ="hazard", output=Toutput, mixture=Tmixture, 
                         K=TK, unitsOut=TunitsOut)
-summary(m_temp_hal) # Pieejamība nav būtiska
+summary(m_doy1_hal) # Pieejamība nav būtiska
+newdata=expand.grid(vieta=c("Apšupe","Ģipka","Ķemeri"),
+                    Jday=seq(100,250,10))
+a1=as.data.frame(predict(m_doy1_hal,type="phi",newdata))
+kraa1=cbind(newdata,a1)
+ggplot(kraa1,aes(Jday,Predicted,ymin=lower,ymax=upper))+
+  geom_ribbon(alpha=0.5)+
+  geom_line()+
+  facet_wrap(~vieta)
+
+## Tikai temperatūra -----
 
 
+summary(TudfGDS)
+m_doy_hal <- gdistsamp(~1, # lambda = abundance
+                       ~1+I(scale(temp_vid)^2)+scale(temp_vid)+scale(Jday),
+                       ~1, # pi = detection
+                       TudfGDS, 
+                       keyfun ="hazard", 
+                       output=Toutput, 
+                       mixture="NB",
+                       K=TK, 
+                       unitsOut=TunitsOut)
+summary(m_doy_hal) # Pieejamība nav būtiska
 
 
+sh <- predict(m_doy_hal,type="lambda")/20 # skaits uz hektāru dalīt uz 20 = skaits uz transektes platību
 
 
-## Veja modelis -----
-m_vejs_hal <- gdistsamp(~1, ~vej_atr_vid -1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                            K=TK, unitsOut=TunitsOut)
-summary(m_vejs_hal) # Pieejamība ir būtiskā
+newdata=expand.grid(Jday=seq(160,250,10),
+                    temp_vid=seq(13,35,5)
+)
+a=as.data.frame(predict(m_doy_hal,type="phi",newdata))
+kraa=cbind(newdata,a)
+ggplot(kraa, aes(Jday, Predicted, ymin = lower, ymax = upper)) +
+  geom_ribbon(alpha = 0.5, colour = NA) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_bw() +
+  facet_wrap(~temp_vid)
 
 
-
-
-## pļaušanas modelis ----
-m_plausana_hal <- gdistsamp(~1, ~plausana -1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                   K=TK, unitsOut=TunitsOut)
-summary(m_plausana_hal) # Pieejamība nav būtiskā
-
-
-
-# Lielais modelis
-m_big_hal <- gdistsamp(~(vieta-1) +(kust_int-1) + maks_stavu_sk + maks_ziedu_sk, 
-                       ~Jday + ziedi_sum + temp_vid + apg_vid + (traucejumi-1), 
-                       ~veg_augst_vid + stavu_sk + temp_vid, 
-                       TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                       K=TK, unitsOut=TunitsOut)
-summary(m_big_hal) # Pieejamība ir būtiskā
-
-
-
-
-# Nulels modelis haz ---- 
-#KAUT KAS NESANĀK
-m0haz <- gdistsamp(~1, ~1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=Tmixture, 
-                   K=TK, unitsOut=TunitsOut)
-summary(m0haz)
-
-backTransform(m0haz, type="lambda")
-confint(backTransform(m0haz, type="lambda"))
-backTransform(m0haz, type="phi")
-backTransform(m0haz, type="det")
-backTransform(m0haz, type="scale")
-
-plot(function(x) gxhaz(x, shape=confint(backTransform(m0haz, type="det"))[2], scale=confint(backTransform(m0haz, type="scale"))[1]), 0, 4, col=gray(0.7), xlab="distance (m)", ylab="Probability density")
-plot(function(x) gxhaz(x, shape=confint(backTransform(m0haz, type="det"))[1], scale=confint(backTransform(m0haz, type="scale"))[2]), 0, 4, col=gray(0.7), add=TRUE)
-plot(function(x) gxhaz(x, shape=backTransform(m0haz, type="det")@estimate, scale=backTransform(m0haz, type="scale")@estimate), 0, 400, add=TRUE)
-
-
-
-
-# Modelēšana Zero-inflated Poisson ---
-R = 119 #transekšu skaits. (Tikai Ģipka un Apšupe)
-T <- 6  # 6 atkārtotas uzskaites
-garums <- 100
-TK=100 #	An integer value specifying the upper bound used in the integration.
-Tdist.breaks <- c(0, 0.5, 1.5, 2.5, 4)
-numDistClasses <- length(Tdist.breaks) - 1  # = 4
-
-ZIPmixture="ZIP"
-TunitsOut="ha"
-Toutput="density"
-
-# Visām sugām
-ZIPVisiudfGDS<-unmarkedFrameGDS(y=TY, 
-                              siteCovs=TVietas,
-                              dist.breaks=Tdist.breaks,
-                              numPrimary=T, 
-                              yearlySiteCovs=TUzskaites, 
-                              survey="line",
-                              unitsIn="m",
-                              tlength=rep(garums, R))
-
-summary(ZIPVisiudfGDS)
-head(yearlySiteCovs(ZIPVisiudfGDS),12)
-
-## Nulles modelis half norm ----
-zip_m0hal <- gdistsamp(~1, ~1, ~1, ZIPVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=ZIPmixture, 
-                   K=TK, unitsOut=TunitsOut)
-summary(zip_m0hal)
-
-
-backTransform(zip_m0hal, type="lambda")
-confint(backTransform(zip_m0hal, type="lambda"))
-backTransform(zip_m0hal, type="phi")
-backTransform(zip_m0hal, type="det")
-
-plot(function(x) gxhn(x, sigma = confint(backTransform(zip_m0hal, type = "det"))[1,2]), 
-     0, 4, col = gray(0.7),
-     xlab = "Attālums (m)", ylab = "Detection probability",
-     ylim = c(0, 1))
-plot(function(x) gxhn(x, sigma=confint(backTransform(zip_m0hal, type="det"))[1,1]), 0, 6, add=TRUE, col=gray(0.7))
-plot(function(x) gxhn(x, sigma=backTransform(zip_m0hal, type="det")@estimate), 0, 6, add=TRUE)
-
-
-
-
-# Temperatūŗas modelis ----
-zip_m_temp_hal <- gdistsamp(~1, ~temp_vid -1, ~1, TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=ZIPmixture, 
+m_doy1_hal <- gdistsamp(~1, 
+                        ~scale(Jday)+I(scale(Jday)^2)+vieta, 
+                        ~1, 
+                        TudfGDS, keyfun ="hazard", output=Toutput, mixture=Tmixture, 
                         K=TK, unitsOut=TunitsOut)
-summary(zip_m_temp_hal) # Pieejamība nav būtiska
+summary(m_doy1_hal) # Pieejamība nav būtiska
+newdata=expand.grid(vieta=c("Apšupe","Ģipka","Ķemeri"),
+                    Jday=seq(100,250,10))
+a1=as.data.frame(predict(m_doy1_hal,type="phi",newdata))
+kraa1=cbind(newdata,a1)
+ggplot(kraa1,aes(Jday,Predicted,ymin=lower,ymax=upper))+
+  geom_ribbon(alpha=0.5)+
+  geom_line()+
+  facet_wrap(~vieta)
 
-
-
-
-# Lielais modelis --------
-# Lielais modelis
-zip_m_big_hal <- gdistsamp(~(vieta-1) +(kust_int-1) + maks_stavu_sk + maks_ziedu_sk, 
-                       ~Jday + ziedi_sum + temp_vid + apg_vid + (traucejumi-1), 
-                       ~veg_augst_vid + stavu_sk + temp_vid, 
-                       TVisiudfGDS, keyfun ="halfnorm", output=Toutput, mixture=ZIPmixture, 
-                       K=TK, unitsOut=TunitsOut)
-summary(zip_m_big_hal) # Pieejamība ir būtiskā

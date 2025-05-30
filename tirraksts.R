@@ -4,13 +4,43 @@ if(!require(lubridate)) install.packages("lubridate")
 if(!require(dplyr)) install.packages("dplyr")
 if(!require(tidyr)) install.packages("tidyr")
 if(!require(unmarked)) install.packages("unmarked")
-if(!require(MASS)) install.packages("MASS")
 if(!require(ggplot2)) install.packages("ggplot2")
+if(!require(corrplot)) install.packages("corrplot")
+
+
 
 # Dati -----------------------------------
 orig_TDataset <- read_excel("originalie_dati.xlsx", sheet = "Noverojumi")
 summary(orig_TDataset)
 Dist_Dataset <- orig_TDataset[!is.na(orig_TDataset$uzsk_ID),]  #Noņem tukšās rindas
+
+# Datu pārskats -----------------
+unique(orig_TDataset$suga_komplekss)
+
+ggplot(
+  data = orig_TDataset[orig_TDataset$suga_komplekss == "Parasto balteņu sugu grupa Pieris brassicae/ P. rapae/ P. napi", ],
+  aes(x = josla)
+) +
+  geom_bar(fill = "gray", color = "gray") +
+  labs(
+    x = "Attāluma josla",
+    y = "Novērojumu skaits"
+  ) +
+  theme_minimal()
+  )
+
+
+
+
+
+
+
+
+
+Parasto balteņu sugu grupas novērojumu sadalījums pa joslām
+
+
+
 dim(Dist_Dataset)
 
 
@@ -34,12 +64,6 @@ Dist_Dataset$datums <- as.Date(Dist_Dataset$datums, format= "%d.%m.%Y")
 unique(Dist_Dataset$datums)
 Dist_Dataset$Jday <- yday(Dist_Dataset$datums)
 summary(Dist_Dataset)
-
-## Laiks ---------------------------------
-#head(Dist_Dataset$laiks_sak)
-#Dist_Dataset$laiks_min_sak <-  as.numeric(format(Dist_Dataset$laiks_sak, "%H")) * 60 + as.numeric(format(Dist_Dataset$laiks_sak, "%M"))
-#Dist_Dataset$laiks_min_beig <-  as.numeric(format(Dist_Dataset$laiks_beig, "%H")) * 60 + as.numeric(format(Dist_Dataset$laiks_beig, "%M"))
-
 
 ## Vērtību aprēķins  ------------------
 # Vidējas vērtības
@@ -123,7 +147,7 @@ ggplot(Dist_Dataset, aes(izmainas)) +
 
 
 Dist_Dataset$bojajumi <- ifelse(  # Kopējie bojājumi (plaušana un nobrauksana u.c.)
-  Dist_Dataset$plausana %in% c("Pļauts") | Dist_Dataset$citi_bojajumi %in% c("Jā", "Daļēji"),
+ Dist_Dataset$plausana %in% c("Pļauts") | Dist_Dataset$citi_bojajumi %in% c("Jā", "Daļēji"),
   "Ir",
   "Nav"
 )
@@ -135,8 +159,9 @@ ggplot(Dist_Dataset, aes(bojajumi)) +
 ## Lieku kolonnu dzēšana --------------------------- 
 data.frame(Numurs = seq_along(Dist_Dataset), Kolonna = names(Dist_Dataset))
 
-Dist_Dataset <- Dist_Dataset %>%  
-  select(-laiks_sak, -laiks_beig, -laiks_vid, -trans_ilg, -temp_sak, -temp_beig,
+
+Dist_Dataset <- Dist_Dataset %>% 
+  dplyr::select(-laiks_sak, -laiks_beig, -laiks_vid, -trans_ilg, -temp_sak, -temp_beig,
          -vej_atr_sak, -vej_atr_beig, -rel_mitr_sak, -rel_mitr_beig, -makon_sak,
          -makon_beig, -apg_sak, -apg_beig, -veg_augst_sak, -veg_augst_beig,
          -rl_ziedi_sak, -rl_ziedi_beig, -rl_augi_sak, -rl_augi_beig, -z_ziedi_sak, 
@@ -182,10 +207,10 @@ skaitliskie_mainigie <- dplyr::select_if(Dist_Dataset, is.numeric)
 
 korelaciju_matrica <- cor(scale(skaitliskie_mainigie), method = "spearman", use = "complete.obs")
 library(corrplot)
-corrplot(korelaciju_matrica, method = "color", type = "upper", tl.cex = 0.7, tl.col = "black")
+corrplot(korelaciju_matrica, method = "color", type = "upper", tl.cex = 0.6, tl.col = "black")
 
 
-augstas_korelaciajs <- which(abs(korelaciju_matrica) >= 0.7 & abs(korelaciju_matrica) < 1, arr.ind = TRUE)
+augstas_korelaciajs <- which(abs(korelaciju_matrica) >= 0.6 & abs(korelaciju_matrica) < 1, arr.ind = TRUE)
 augsto_korelaciju_matrica <- data.frame(
   Var1 = rownames(korelaciju_matrica)[augstas_korelaciajs[, 1]],
   Var2 = colnames(korelaciju_matrica)[augstas_korelaciajs[, 2]],
@@ -241,7 +266,7 @@ TNov_pa_trans_j_w <- reshape(TNov_pa_trans_j,
 
 # Sakārtot joslu kolonnas pareizā secībā
 colnames(TNov_pa_trans_j_w)
-TNov_pa_trans_j_w <- TNov_pa_trans_j_w %>% select(uzsk_ID, trans_kods, zinatniskais, 
+TNov_pa_trans_j_w <- TNov_pa_trans_j_w %>% dplyr::select(uzsk_ID, trans_kods, zinatniskais, 
                                                   Det.1, Det.2, Det.3, Det.4)
 
 names(TNov_pa_trans_j_w)[4:7] <- c("J50", "J150", "J250", "Jtalak")
@@ -289,6 +314,9 @@ dim(transektes_uzsk)
 
 # savienojam visu punktu visas uzskaites (arī nenotikušās) ar notikušo datiem
 Tpilnais <- merge(transektes_uzsk, Tpilnais, by=c("trans_kods", "uzsk_ID"), all.x=TRUE, sort=FALSE)
+
+
+
 head(Tpilnais)
 dim(Tpilnais)
 
@@ -537,6 +565,39 @@ varbutibas <- gxhaz(attalumi, shape = dist_shape_est, scale = dist_scale_est)
 data.frame(Attālums_m = attalumi, Konstatēšanas_varbūtība = round(varbutibas, 3))
 
 
+# Summāra varbūtība katrai joslai ---------
+
+joslas_dist <- c(0,0.5,1.5,2.5)
+
+
+# Saglabā funkciju ar konkrētiem parametriem
+det_fun <- function(x) gxhaz(x, shape = dist_shape_est, scale = dist_scale_est)
+
+# Aprēķina kopējo detekcijas varbūtību katrā joslā (integrālis)
+joslu_varbutibas <- sapply(1:(length(joslas_dist) - 1), function(i) {
+  integrate(det_fun, lower = joslas_dist[i], upper = joslas_dist[i + 1])$value
+})
+
+# Ja vajag proporcionālo daļu (piemēram, sadalījumam):
+joslu_garumi <- diff(joslas_dist)
+joslu_vid_varbutibas <- joslu_varbutibas / joslu_garumi  # vidējā varbūtība katrā joslā
+
+# Rezultāts
+data.frame(
+  Josla = paste(joslas_dist[-length(joslas_dist)], joslas_dist[-1], sep = "–"),
+  Vid_varbutiba = round(joslu_vid_varbutibas, 3),
+  Integralis = round(joslu_varbutibas, 3)
+)
+
+
+
+
+
+
+
+
+
+
 
 
 #Var aplēst sakitu katrai transektei atsevīšķi balstoties uz viedējo konstatēšanas
@@ -596,56 +657,63 @@ n_df <- Noverojumi_index_long %>%
 
 # Pielāgo grafikam:
 ggplot(Noverojumi_index_long, aes(x = vieta, y = skaits, fill = tips, color = tips)) +
-  geom_boxplot(position = position_dodge(width = 0.6), outlier.shape = NA, width = 0.5, alpha = 0.4) +    
-  geom_jitter(position = position_dodge(width = 0.6), alpha = 0.7, size = 4) +
+  geom_boxplot(position = position_dodge(width = 0.6), outlier.shape = NA, width = 0.5, alpha = 0.4) + 
   stat_summary(fun = median, position = position_dodge(width = 0.6), geom = "crossbar", width = 0.5, fatten = 1, colour = "black", linewidth = 1) +
-  stat_summary(fun = mean, geom = "point", 
-               position = position_dodge(width = 0.6), 
-               shape = 21, size = 6, colour = "black") +
-  geom_text(data = n_df, aes(x = vieta, y = 0, label = paste0("n=", n), group = tips), 
+  
+  geom_jitter(position = position_dodge(width = 0.6), alpha = 0.7, size = 4) +
+  geom_text(data = n_df, aes(x = vieta, y = 0, label = paste0("n = ", n), group = tips), 
             position = position_dodge(width = 0.6), vjust = 1.5, color = "black") +
   scale_y_continuous(
     limits = c(0, NA),
     breaks = seq(0, max(Noverojumi_index_long$skaits), by = 5)
   ) +
   scale_fill_discrete(
-    name = "Skaits",
-    labels = c("Nulles modeļa aplēstais", "Novērotais")
+    name = "Kopskaita veids",
+    labels = c("Aplēstais", "Novērotais")
   ) +
   scale_color_discrete(
-    name = "Skaits",
-    labels = c("Nulles modeļa aplēstais", "Novērotais")
+    name = "Kopskaita veids",
+    labels = c("Aplēstais", "Novērotais")
   ) +
   theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_blank(),
+    legend.title = element_text(size = 14),
+    legend.position = "right",
+    axis.title.x = element_text(size = 16),
+    axis.title.y = element_text(size = 16)
+  ) +
   labs(
     x = "Pētījuma vieta",
-    y = "Pollarda sastopamības indekss"
+    y = "Kopskaita vērtība"
   )
 
 
 
-# Grupu salīdzinājums
+#Aplēstie dati
+#Grupu salīdzinājums
 null_apleses_dati <- Noverojumi_index_long %>%
   filter(tips != "kopa")
 ggplot(null_apleses_dati, aes(skaits)) + 
   geom_histogram(binwidth = 5) +
   facet_wrap(~vieta)
-tapply(null_apleses_dati$skaits, null_apleses_dati$vieta, shapiro.test)
-# Ģipka nav normāli sadalīta
-# Salīdzināt grupas 
+
+# Salīdzināt grupas - neparametriskai, jo sakita dati
 kruskal.test(skaits ~ vieta, data = null_apleses_dati)
 # Visās grupās pieder vienai ģenerālkopai
 
 
+#Novēroti dati
+#Grupu salīdzinājums
 null_noveroti_dati <- Noverojumi_index_long %>%
   filter(tips == "kopa")
 
 ggplot(null_noveroti_dati, aes(skaits)) + 
   geom_histogram(binwidth = 5) +
   facet_wrap(~vieta)
-tapply(null_noveroti_dati$skaits, null_noveroti_dati$vieta, shapiro.test)
-# Neviens nav normāli sadalīts
-# Salīdzināt grupas 
+
+# Salīdzināt grupas - neparametriskais, jo skaita dati
 kruskal.test(skaits ~ vieta, data = null_noveroti_dati)
 dunn_test(skaits~vieta,data=null_noveroti_dati)
 
@@ -654,7 +722,7 @@ dunn_test(skaits~vieta,data=null_noveroti_dati)
 
 
 
-# Detekcijas procesa modelis --------------
+# Detekcijas procesa modeli --------------
 summary(TUzskaites)
 summary(m0hazNB)
 
@@ -666,6 +734,36 @@ m_det_haz <- gdistsamp(~1,
                          I(scale(veg_augst_vid)^2), 
                          TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
 summary(m_det_haz)
+#AIC: 686.2351 
+
+
+
+
+m_det2_haz <- gdistsamp(~1,
+                       ~1, 
+                       ~scale(stavu_sk) + 
+                         I(scale(stavu_sk)^2) + 
+                         scale(veg_augst_vid), 
+                       TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
+summary(m_det2_haz)
+#AIC: 701.0999 
+
+
+
+m_det3_haz <- gdistsamp(~1,
+                       ~1, 
+                       ~scale(stavu_sk)  + 
+                         scale(veg_augst_vid), 
+                       TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
+summary(m_det3_haz)
+#AIC: 682.248 
+
+
+
+
+
+
+
 
 
 
@@ -681,10 +779,47 @@ m_Jday_haz<- gdistsamp(~1, # lambda = abundance
                        K=TK, 
                        unitsOut=TunitsOut)
 summary(m_Jday_haz)
+#AIC 668.5932 
 
 
-newdata=expand.grid(Jday=seq(153,244,5))
-a1=as.data.frame(predict(m_Jday_haz,type="phi",newdata))
+m_Jday3_haz<- gdistsamp(~1, # lambda = abundance
+                        ~1+I(scale(Jday)^2) :
+                          scale(Jday), # phi = availability
+                        ~1, # pi = detection
+                        TudfGDS, 
+                        keyfun ="hazard", 
+                        output=Toutput, 
+                        mixture="NB",
+                        K=TK, 
+                        unitsOut=TunitsOut)
+summary(m_Jday3_haz)
+#AIC: 679.3602 
+
+m_Jday2_haz<- gdistsamp(~1, # lambda = abundance
+                       ~1+I(scale(Jday)^2) +
+                         scale(Jday), # phi = availability
+                       ~1, # pi = detection
+                       TudfGDS, 
+                       keyfun ="hazard", 
+                       output=Toutput, 
+                       mixture="NB",
+                       K=TK, 
+                       unitsOut=TunitsOut)
+summary(m_Jday2_haz)
+#AIC: 668.0225
+# LABAKAIS
+options(digits = 5)
+
+
+
+
+
+
+
+
+
+newdata=expand.grid(Jday=seq(153,244,1))
+a1=as.data.frame(predict(m_Jday2_haz,type="phi",newdata))
 kraa1=cbind(newdata,a1)
 ggplot(kraa1, aes(Jday, Predicted, ymin = lower, ymax = upper)) +
   geom_ribbon(alpha = 0.4) +
@@ -693,9 +828,30 @@ ggplot(kraa1, aes(Jday, Predicted, ymin = lower, ymax = upper)) +
   labs(x = "Diena no gada sākuma", y = "Pieejamība uzskaitei") +  # Asu nosaukumi
   theme_classic() +
   theme(
-    axis.title = element_text(size = 16),  # Asu nosaukumu lielums
-    axis.text = element_text(size = 14)    # Asu vērtību lielums
+    axis.title = element_text(size = 12),  # Asu nosaukumu lielums
+    axis.text = element_text(size = 12)    # Asu vērtību lielums
   )
+
+
+# Iegūstam pieejamības prognozes visiem novērojumiem
+phi_pred2 <- predict(m_Jday2_haz, type = "phi")
+# Vidējā pieejamība visā sezonā (visiem datiem)
+mean(phi_pred2$Predicted, na.rm = TRUE)
+
+
+# Vidēja vērtība katrām menesim
+
+
+phi_menesi <- kraa1 %>%
+  mutate(Menesis = case_when(
+    Jday >= 153 & Jday <= 182 ~ "Jūnijs",
+    Jday >= 183 & Jday <= 213 ~ "Jūlijs",
+    Jday >= 214 & Jday <= 244 ~ "Augusts"
+  )) %>%
+  group_by(Menesis) %>%
+  summarise(Pieejamiba = mean(Predicted, na.rm = TRUE))
+
+
 
 
 
@@ -748,6 +904,80 @@ summary(m_Jday_ziedi_temp_apg_ziedi_vejs_trauc_haz2) #AIC: 643.7234
 
 
 
+
+
+
+
+m_Jday_makoni_haz2 <- gdistsamp(~1,
+                                ~1+I(scale(Jday)^2)+
+                                  I(scale(temp_vid)^2) +
+                                  scale(makon_vid)+
+                                  scale(apg_vid) +
+                                  scale(ziedi_sum) + 
+                                  scale(vej_atr_vid)+ 
+                                  traucejumi,
+                                ~1, 
+                                TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
+
+
+summary(m_Jday_makoni_haz2) #AIC: 645.72 
+
+
+
+m_Jday_plausana_haz2 <- gdistsamp(~1,
+                                ~1+I(scale(Jday)^2)+
+                                  I(scale(temp_vid)^2) +
+                                  plausana +
+                                  scale(apg_vid) +
+                                  scale(ziedi_sum) + 
+                                  scale(vej_atr_vid)+ 
+                                  traucejumi,
+                                ~1, 
+                                TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
+
+
+
+summary(m_Jday_plausana_haz2) #AIC:  645.5324
+
+
+
+
+m_Jday_bojajumi_haz2 <- gdistsamp(~1,
+                                  ~1+I(scale(Jday)^2)+
+                                    I(scale(temp_vid)^2) +
+                                    bojajumi +
+                                    scale(apg_vid) +
+                                    scale(ziedi_sum) + 
+                                    scale(vej_atr_vid)+ 
+                                    traucejumi,
+                                  ~1, 
+                                  TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
+
+
+
+summary(m_Jday_bojajumi_haz2) #AIC:  645.5324 
+
+
+
+
+
+
+m_Jtest_haz2 <- gdistsamp(~1,
+                          ~1+I(scale(Jday)^2) +
+                            scale(Jday)+
+                            scale(apg_vid) +
+                            scale(ziedi_sum) + 
+                            scale(vej_atr_vid)+ 
+                            traucejumi,
+                          ~1, 
+                          TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
+
+
+summary(m_Jtest_haz2) #AIC: 644.4507 
+
+
+
+
 m_Jday_ziedi_apg_ziedi_vejs_trauc_haz2 <- gdistsamp(~1,
                                                     ~1+I(scale(Jday)^2) +
                                                        scale(apg_vid) +
@@ -758,7 +988,11 @@ m_Jday_ziedi_apg_ziedi_vejs_trauc_haz2 <- gdistsamp(~1,
                                                     TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
 
 
-summary(m_Jday_ziedi_apg_ziedi_vejs_trauc_haz2) #AIC: AIC: 642.4741
+summary(m_Jday_ziedi_apg_ziedi_vejs_trauc_haz2) #AIC: 642.4741
+
+
+
+
 
 
 
@@ -779,7 +1013,17 @@ m_Jday_ziedi_apg_ziedi_vejs_trauc_haz2 <- gdistsamp(~1,
                                                     TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
 
 
-summary(m_Jday_ziedi_apg_ziedi_vejs_trauc_haz2) #AIC: AIC: 642.4741
+summary(m_Jday_ziedi_apg_ziedi_vejs_trauc_haz2) #AIC: 642.4741
+
+
+
+
+
+
+
+
+
+
 
 
 # 2. Iegūt detekcijas funkcijas parametru (kopīgs visām transektēm)
@@ -791,7 +1035,7 @@ midpoints <- (head(Tdist.breaks, -1) + tail(Tdist.breaks, -1)) / 2 #joslu robež
 p_joslas <- gxhaz(midpoints, sigma_hat, scale = scale_hat) # KOnst. varb katrai joslai (tā kā gxhn darbojas pēc attāluma)
 
 
-# Pielāgota sakita aplēses
+## Pielāgota sakita aplēses ---------
 taurini2 <- taurini
 joslu_nosaukumi <- c("J50", "J150", "J250", "Jtalak")
 
@@ -858,7 +1102,7 @@ ggplot(taurini2_index_long, aes(x = vieta, y = skaits, color = tips, fill = tips
     name = "Skaits",
     labels = c("Aplēstais pēc phi un det", "Novērotais")
   ) +
-  theme_minimal(base_size = 14) +
+  theme_classic(base_size = 14) +
   labs(
     x = "Pētījuma vieta",
     y = "Pollarda sastopamības indekss"
@@ -867,20 +1111,83 @@ ggplot(taurini2_index_long, aes(x = vieta, y = skaits, color = tips, fill = tips
 
 
 
-# Grupu salīdzinājums
+## Grupu salīdzinājums --------
 phi_apleses_dati <- taurini2_index_long %>%
   filter(tips != "kopa")
 ggplot(phi_apleses_dati, aes(skaits)) + 
   geom_histogram(binwidth = 5) +
   facet_wrap(~vieta)
-tapply(phi_apleses_dati$skaits, phi_apleses_dati$vieta, shapiro.test)
-# Mekas nav normāli sadalīts
+
 # Salīdzināt grupas 
 kruskal.test(skaits ~ vieta, data = phi_apleses_dati)
 # Visās grupās pieder vienai ģenerālkopai
 
 
 
+## Fenoloģija ---------- 
+
+reference_uzskaites <- read_excel("originalie_dati.xlsx", sheet = "Uzskaites")
+
+phi_fenol <- left_join(
+  taurini2, 
+  reference_uzskaites %>% select(uzsk_ID, vieta, datums), 
+  by = c("uzsk_ID", "vieta"),
+  relationship = "many-to-many"
+)
+
+
+phi_fenol_grupets <- phi_fenol %>%
+  filter(!is.na(aplestais_skaits_phi)) %>%  # Filtrējam rindas, kur "aplestais_skaits_phi" ir NA
+  group_by(vieta, datums) %>%
+  summarise(skaits = sum(aplestais_skaits_phi), .groups = "drop")
+
+phi_fenol_grupets$datums <- as.Date(phi_fenol_grupets$datums, format = "%Y-%m-%d")
+
+
+phi_fenol_grupets <- phi_fenol_grupets %>%
+  mutate(datums = case_when(
+    datums == as.Date("2024-06-25") ~ as.Date("2024-06-26"),
+    datums == as.Date("2024-07-17") ~ as.Date("2024-07-18"),
+    TRUE ~ datums  # visi pārējie datumi paliek nemainīti
+  ))
+
+
+
+# Grafiks
+ggplot(phi_fenol_grupets, aes(x = datums, y = skaits, group = vieta, color = vieta)) +
+  geom_line(size = 1.5) +
+  geom_point(size = 4) +
+  scale_x_date(
+    breaks = sort(unique(phi_fenol_grupets$datums)),
+    date_labels = "%d.%m"
+  ) +
+  scale_y_continuous(
+    limits = c(0, max(phi_fenol_grupets$skaits)),
+    breaks = seq(0, max(phi_fenol_grupets$skaits, na.rm = TRUE), by = 20)
+  ) +
+  labs(
+    x = "Uzskaites datums",
+    y = "Novēroto indivīdu skaits",
+    color = "Pētījuma vieta"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.majorr.y = element_blank(),
+    panel.grid.major.x = element_blank(),
+    legend.title = element_text(size = 24),
+    legend.text = element_text(size = 20),
+    legend.position = "right",
+    axis.text.x = element_text(size = 18),
+    axis.text.y = element_text(size = 18),
+    axis.title.x = element_text(size = 24),
+    axis.title.y = element_text(size = 24)
+  ) + theme(
+    legend.position = "right",
+    plot.background = element_rect(fill = "white", color = NA),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
+  )
 
 
 
@@ -894,132 +1201,336 @@ kruskal.test(skaits ~ vieta, data = phi_apleses_dati)
 
 
 
-
-# Viens faktors
-
-m_mitr_haz <- gdistsamp(~1,
-                        ~1+scale(rel_mitr_vid),
-                        ~1, TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_mitr_haz) # AIC: 667.1465 Mitrums nav būtisks
-
-
-m_apg_haz <- gdistsamp(~1,
-                       ~1+scale(apg_vid),
-                       ~1, TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_apg_haz) # AIC: AIC: 678.3386  nav būtisks
-
-
-m_apg2_haz <- gdistsamp(~1,
-                       ~1+I(scale(apg_vid)^2),
-                       ~1, TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_apg2_haz) # AIC: AIC: 678.3386  nav būtisks
-
-
-m_vejs_haz <- gdistsamp(~1,
-                        ~1+scale(vej_atr_vid),
-                        ~1, TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_vejs_haz) # AIC: 660.0816 nav būtisks
-
-
-
-m_Jday_haz <- gdistsamp(~1,
-                        ~1+I(scale(Jday)^2),
-                        ~1, TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_Jday_haz) #AIC: 668.5932 
-
-
-
-# Daudz faktoru
-summary(TUzskaites)
-
-m_Jday_temp_vejs_haz <- gdistsamp(~1,
-                        ~1+scale(Jday) + I(scale(temp_vid)^2) + I(scale(vej_atr_vid)^2),
-                        ~1, TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_Jday_temp_vejs_haz) # AIC: 669.2091 nav būtisks
-
-
-
-
-m_Jday_temp_vejs_kust_haz <- gdistsamp(~1,
-                                  ~1+scale(Jday) + I(scale(temp_vid)^2) + I(scale(vej_atr_vid)^2)+ kust_int,
-                                  ~1+veg_aug, TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_Jday_temp_vejs_kust_haz) # AIC: 663.3629 traucējumi ir būtiski
-
-
-
-m_Jday_ziedi_temp_vejs_trauc_haz <- gdistsamp(~1,
-                                       ~1+scale(Jday)+ scale(ziedi_sum) + scale(temp_vid) + scale(vej_atr_vid)+ traucejumi,
-                                       ~1+stavu_sk, 
-                                       TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_Jday_ziedi_temp_vejs_trauc_haz) # AIC: 657.3271  Ziedi un vejs ir būtiski
-
-
-
-
-m_Jday_ziedi_temp_vejs_haz <- gdistsamp(~1,
-                                              ~1+scale(Jday)+ scale(ziedi_sum) + scale(temp_vid) + scale(vej_atr_vid),
-                                              ~1+stavu_sk, 
-                                              TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_Jday_ziedi_temp_vejs_haz) # AIC: 657.2529
-
-
-
-m_Jday_ziedi_vejs_trauc_haz <- gdistsamp(~1,
-                                         ~1+I(scale(Jday)^2)+ scale(ziedi_sum) + scale(vej_atr_vid)+ traucejumi,
-                                         ~1+stavu_sk, 
-                                         TudfGDS, keyfun ="hazard", output=Toutput, mixture="NB", K=TK, unitsOut=TunitsOut)
-summary(m_Jday_ziedi_vejs_trauc_haz) # AIC: 655.4917   Ziedi un vejs ir būtiski
-
-
-
-
-
-
-
-
-
-# Pollarda apstākļu standarta pārbaude 1 --------------
+#1 Pollarda apstākļu standarta pārbaude 1 --------------
 ## DoY modelis -----
+m_Pollardtest_haz<- gdistsamp(~1, # lambda = abundance
+                          ~1+I(scale(Jday)^2)+scale(Jday)+scale(temp_vid)+I(scale(temp_vid)^2) + scale(apg_vid), # phi = availability
+                          ~1, # pi = detection
+                          TudfGDS, 
+                          keyfun ="hazard", 
+                          output=Toutput, 
+                          mixture="NB",
+                          K=TK, 
+                          unitsOut=TunitsOut)
+
+summary(m_Pollardtest_haz)
+#AIC: AIC: 657.8566 
+
+
+
+
+m_Pollardtest2_haz<- gdistsamp(~1, # lambda = abundance
+                              ~1+I(scale(Jday)^2) + I(scale(temp_vid)^2) + scale(apg_vid), # phi = availability
+                              ~1, # pi = detection
+                              TudfGDS, 
+                              keyfun ="hazard", 
+                              output=Toutput, 
+                              mixture="NB",
+                              K=TK, 
+                              unitsOut=TunitsOut)
+
+summary(m_Pollardtest2_haz)
+
+
+m_Pollardtest3_haz<- gdistsamp(~1, # lambda = abundance
+                               ~1+I(scale(Jday)^2) + I(scale(temp_vid)^2) + scale(apg_vid) + I(scale(apg_vid)^2), # phi = availability
+                               ~1, # pi = detection
+                               TudfGDS, 
+                               keyfun ="hazard", 
+                               output=Toutput, 
+                               mixture="NB",
+                               K=TK, 
+                               unitsOut=TunitsOut)
+
+summary(m_Pollardtest3_haz)
+
+
+
 summary(TudfGDS)
 m_Pollard_haz<- gdistsamp(~1, # lambda = abundance
-                       ~1+I(scale(Jday)^2)+scale(temp_vid)+I(scale(temp_vid)^2) + scale(apg_vid), # phi = availability
-                       ~1, # pi = detection
-                       TudfGDS, 
-                       keyfun ="hazard", 
-                       output=Toutput, 
-                       mixture="NB",
-                       K=TK, 
-                       unitsOut=TunitsOut)
+                          ~1+I(scale(Jday)^2)+scale(temp_vid)+I(scale(temp_vid)^2) + scale(apg_vid), # phi = availability
+                          ~1, # pi = detection
+                          TudfGDS, 
+                          keyfun ="hazard", 
+                          output=Toutput, 
+                          mixture="NB",
+                          K=TK, 
+                          unitsOut=TunitsOut)
 
 summary(m_Pollard_haz)
-newdata=expand.grid(Jday=seq(153,244,5),
-                    apg_vid=seq(0,100,20),
-                    temp_vid=seq(13,35,5))
+#AIC: 657.0908 # Labakais
+
+
+
+
+
+
 
 newdata=expand.grid(Jday=seq(153,244,5),
-                    vej_atr_vid=seq(0,11,3),
-                    temp_vid=seq(13,35,5),
-                    vej_atr_vid=seq(0,11,3))
+                    apg_vid=seq(0,100,20),
+                    temp_vid=seq(13,33,5))
+
 
 
 a1=as.data.frame(predict(m_Pollard_haz,type="phi",newdata))
 kraa1=cbind(newdata,a1)
+head(kraa1)
 ggplot(kraa1, aes(Jday, Predicted, ymin = lower, ymax = upper)) +
   geom_ribbon(alpha = 0.5) +
   geom_line(size=1) +
-  scale_y_continuous(limits = c(0, 1)) +
-  labs(x = "Diena no gada sākuma", y = "Pieejamība uzskaitei") +  # Asu nosaukumi
+  scale_x_continuous(
+    name = "Diena kopš gada sākuma",
+    sec.axis = dup_axis(name = "Temperatūra")  # <- te augšējais virsraksts
+  ) + 
+  scale_y_continuous(
+    name = "Pieejamība uzskaitei",
+    limits = c(0, 1),
+    sec.axis = sec_axis(~., name = "Apgaismojums")
+    ) +
+  labs(x = "Diena no gada sākuma", y = "Pieejamība uzskaitei") +
+  # Asu nosaukumi
   theme_minimal() +
   theme(
-    axis.title = element_text(size = 16),  # Asu nosaukumu lielums
-    axis.text = element_text(size = 14)    # Asu vērtību lielums
+    axis.text.y.right = element_blank(),
+    axis.text.x.top = element_blank(),
+    axis.title = element_text(size = 18),  # Asu nosaukumu lielums
+    axis.text = element_text(size = 14),
+    strip.text = element_text(size = 14) # Asu vērtību lielums
   ) +
-  facet_grid(apg_vid~temp_vid)
+  facet_grid(
+    apg_vid ~ temp_vid,
+    labeller = labeller(
+      apg_vid = c("0" = "0%", "20" = "20%", "40" = "40%", "60" = "60%", "80" = "80%", "100" = "100%"),
+      temp_vid = c("13" = "13°C", "18" = "18°C", "23" = "23°C", "28" = "28°C", "33" = "33°C")
+    )
+  )
+
+
+# Q1: Vai ir atškirības standarta galos? Starp minimālam prasībam un maksimāli iespējamiem laikapstāklīe
+# Q2: Vai pie vienada temp ir atsķirības starp dažādiem apg?
+# G3: Vai Pie viena apgaismojuma ir atšķirības starp dažādam temp
+
+
+
+## Q1 grupu salīdzinājums --------
+
+min_apstakli <- subset(kraa1, temp_vid == 13 & apg_vid == 60)
+lotilabi_apstakli <- subset(kraa1, temp_vid == 33 & apg_vid == 100)
+
+# Apvienot un sagatavot salīdzināšanai
+salidzin1 <- rbind(
+  data.frame(grupa = "G1", Predicted = min_apstakli$Predicted, SE = min_apstakli$SE),
+  data.frame(grupa = "G2", Predicted = lotilabi_apstakli$Predicted, SE = lotilabi_apstakli$SE)
+)
+
+
+### normalitate -----
+library(qqplotr)
+ggplot(salidzin1, aes(sample = Predicted)) + facet_wrap(~grupa) +
+  geom_qq_band() + stat_qq_line() + stat_qq_point() +
+  labs(x = "Teoretiskas kvantiles", y = "Paraugkopas kvantiles")
+# ne ļoti - astes iet prom
+
+ggplot(salidzin1, aes(grupa, Predicted)) +
+  geom_boxplot()
+# Nav ietekmējošo vertibu, skaidrs kā grupas atšķiras
+
+
+tapply(salidzin1$Predicted, salidzin1$grupa, shapiro.test)
+# Abas normāli sadalīti
+
+### Dispersiju salīdzināsana ----
+var.test(salidzin1$Predicted ~ salidzin1$grupa)
+
+# Nav homogēnas dispresijas
+
+
+### Salīdzināšana ----
+t.test(salidzin1$Predicted ~ salidzin1$grupa, var.equal = FALSE)
+
+
+
+## Q2 Salīdzinājums vienāda temp-----
+
+temp23 <- subset(kraa1, temp_vid == 23)
+temp23$apg_f <- factor(temp23$apg_vid)
+
+### Normalitates parbaude -----
+#labs grafiks
+ggplot(temp23, aes(apg_f, Predicted)) + geom_boxplot() +
+  scale_y_continuous(limits = c(0, 0.5)) +  # <-- iestati sev vajadzīgo intervālu
+  theme_minimal()
+
+
+tapply(temp23$Predicted, temp23$apg_f, shapiro.test)
+# visi ir normāli sadalīti
+
+### Dispersijas homoģenitātes parbaude ----
+library(car)
+leveneTest(y = temp23$Predicted, group = temp23$apg_f)
+# Nav vienādas dispersijas
+
+### Grupu salīdizināšana ----
+oneway.test(Predicted ~ apg_f, data = temp23, var.equal = FALSE)
+
+library(rstatix)
+ght1 <- games_howell_test(Predicted ~ apg_f, data = temp23)
+options(scipen = 99)
+
+
+
+## Q3 Salīdzinājums -----
+apg40 <- subset(kraa1, apg_vid == 40)
+apg40$temp_f <- factor(apg40$temp_vid) # pārverst par faktoru
+
+
+### Normalitātes parbaude ----
+#labs grafiks
+ggplot(apg40, aes(temp_f, Predicted)) + geom_boxplot()+
+  scale_y_continuous(limits = c(0, 0.5)) + 
+  theme_minimal()
+  
+
+tapply(apg40$Predicted, apg40$temp_f, shapiro.test)
+# visi ir normāli sadalīti
+
+### Dispersijjas homoģenitātes parbaude ----
+library(car)
+leveneTest(y = apg40$Predicted, group = apg40$temp_f)
+# Nav vienādas dispersijas
+
+
+### Grupu salīdzināšana ----
+oneway.test(Predicted ~ temp_f, data = apg40, var.equal = FALSE)
+
+library(rstatix)
+ght2 <- games_howell_test(Predicted ~ temp_f, data = apg40)
+options(scipen = 99)
+
+
+
+# 2Pollarda standarta pārbaude ----
+## DoY modelis -----
+summary(TudfGDS)
+m_Pollard2_haz<- gdistsamp(~1, # lambda = abundance
+                          ~1+I(scale(Jday)^2)+I(scale(temp_vid)^2) + scale(vej_atr_vid), # phi = availability
+                          ~1, # pi = detection
+                          TudfGDS, 
+                          keyfun ="hazard", 
+                          output=Toutput, 
+                          mixture="NB",
+                          K=TK, 
+                          unitsOut=TunitsOut)
+
+summary(m_Pollard2_haz)
+#AIC 651.3184 
+### LABAIKAIS pēc VISPĀR
+
+m_Pollard2test_haz<- gdistsamp(~1, # lambda = abundance
+                           ~1+I(scale(Jday)^2)+scale(Jday)+scale(temp_vid)+I(scale(temp_vid)^2) + scale(vej_atr_vid), # phi = availability
+                           ~1, # pi = detection
+                           TudfGDS, 
+                           keyfun ="hazard", 
+                           output=Toutput, 
+                           mixture="NB",
+                           K=TK, 
+                           unitsOut=TunitsOut)
+
+summary(m_Pollard2test_haz)
+#AIC 653.0187
+
+
+m_Pollard3test_haz<- gdistsamp(~1, # lambda = abundance
+                               ~1+I(scale(Jday)^2)+I(scale(temp_vid)^2)+scale(temp_vid) + scale(vej_atr_vid), # phi = availability
+                               ~1, # pi = detection
+                               TudfGDS, 
+                               keyfun ="hazard", 
+                               output=Toutput, 
+                               mixture="NB",
+                               K=TK, 
+                               unitsOut=TunitsOut)
+
+summary(m_Pollard3test_haz)
+#AIC 651.3184 
+### LABAIKAIS pēc AIC
+
+
+m_Pollard4test_haz<- gdistsamp(~1, # lambda = abundance
+                               ~1+I(scale(Jday)^2)+I(scale(temp_vid)^2)+scale(temp_vid) + I(scale(vej_atr_vid)^2) +scale(vej_atr_vid), # phi = availability
+                               ~1, # pi = detection
+                               TudfGDS, 
+                               keyfun ="hazard", 
+                               output=Toutput, 
+                               mixture="NB",
+                               K=TK, 
+                               unitsOut=TunitsOut)
+
+summary(m_Pollard4test_haz)
+#AIC 653.0096 
 
 
 
 
 
+newdata=expand.grid(Jday=seq(153,244,5),
+                    vej_atr_vid=seq(0,5,1),
+                    temp_vid=seq(13,35,5))
+
+
+a2=as.data.frame(predict(m_Pollard2_haz,type="phi",newdata))
+kraa2=cbind(newdata,a2)
+
+ggplot(kraa2, aes(Jday, Predicted, ymin = lower, ymax = upper)) +
+  geom_ribbon(alpha = 0.5) +
+  geom_line(size=1) +
+  scale_x_continuous(
+    name = "Diena kopš gada sākuma",
+    sec.axis = dup_axis(name = "Temperatūra")  # <- te augšējais virsraksts
+  ) + 
+  scale_y_continuous(
+    name = "Pieejamība uzskaitei",
+    limits = c(0, 1),
+    sec.axis = sec_axis(~., name = "Vēja ātums")
+  ) +
+  labs(x = "Diena no gada sākuma", y = "Pieejamība uzskaitei") +
+  # Asu nosaukumi
+  theme_minimal() +
+  theme(
+    axis.text.y.right = element_blank(),
+    axis.text.x.top = element_blank(),
+    axis.title = element_text(size = 18),  # Asu nosaukumu lielums
+    axis.text = element_text(size = 14),
+    strip.text = element_text(size = 14) # Asu vērtību lielums
+  ) +
+  facet_grid(
+    vej_atr_vid ~ temp_vid,
+    labeller = labeller(
+      vej_atr_vid = c("0" = "0 m/s", "1" = "1 m/s", "2" = "2 m/s", "3" = "3 m/s", "4" = "4 m/s", "5" = "5 m/s"),
+      temp_vid = c("13" = "13°C", "18" = "18°C", "23" = "23°C", "28" = "28°C", "33" = "33°C")
+    )
+  )
+
+
+
+
+# Q1: Vai ir atškirības piejamibā dažāda veja stiprumā?
+
+### Normalitates parbaude -----
+#labs grafiks
+kraa2$vejs_f <- factor(kraa2$vej_atr_vid) # pārverst par faktoru
+
+
+ggplot(kraa2, aes(vejs_f, Predicted)) + geom_boxplot() +
+  scale_y_continuous(limits = c(0, 0.5)) +  # <-- iestati sev vajadzīgo intervālu
+  theme_minimal()
+
+
+tapply(kraa2$Predicted, kraa2$vejs_f, shapiro.test)
+# neviens nav normālis sadalīts
+
+###  Grupu salīdzinājums- ----
+kruskal.test(Predicted ~ vejs_f, data = kraa2)
+vejs_pari <- dunn_test(Predicted~vejs_f,data=kraa2)
 
 
 
@@ -1078,41 +1589,8 @@ Noverojumi$aplestais_skaits_phi <- Noverojumi$kopa / (Noverojumi$phi_hat * p_avg
 
 
 
-# Pollarda apstākļu standarta pārbaude 1 --------------
-## DoY modelis -----
-summary(TudfGDS)
-m_Jday_haz<- gdistsamp(~1, # lambda = abundance
-                       ~1+I(scale(Jday)^2)+scale(temp_vid)+I(scale(temp_vid)^2)+scale(vej_atr_vid) + scale(apg_vid) + I(scale(apg_vid)^2), # phi = availability
-                       ~1, # pi = detection
-                       TudfGDS, 
-                       keyfun ="hazard", 
-                       output=Toutput, 
-                       mixture="NB",
-                       K=TK, 
-                       unitsOut=TunitsOut)
-summary(m_Jday_haz) # Pieejamība nav būtiska
 
 
-sh <- predict(m_doy_hal,type="lambda")/20 # skaits uz hektāru dalīt uz 20 = skaits uz transektes platību
-sp <- predict(m_doy_hal,type="phi")/20
-
-
-newdata=expand.grid(#vieta=c("Apšupe","Ģipka","Ķemeri")
-  Jday=seq(160,250,10)
-  ,vej_atr_vid=seq(0,5,1)
-  ,temp_vid=seq(13,35,5)
-  , traucejumi =c("Ir", "Nav")
-)
-a=as.data.frame(predict(m_doy_hal,type="phi",newdata))
-kraa=cbind(newdata,a)
-ggplot(kraa, aes(Jday, Predicted, fill = traucejumi, ymin = lower, ymax = upper)) +
-  geom_ribbon(alpha = 0.5, colour = NA) +
-  geom_line(aes(color = traucejumi)) +
-  scale_fill_manual(values = c("red", "limegreen")) +
-  scale_color_manual(values = c("darkred", "darkgreen")) +
-  scale_y_continuous(limits = c(0, 1)) +
-  theme_bw() +
-  facet_grid(vej_atr_vid ~ temp_vid)
 
 
 

@@ -72,7 +72,6 @@ ggplot() +
                      name = "Apsaimniekošanas grupa") +
   theme_minimal() +
   theme(
-    plot.title = element_text(size = 23, face = "bold"), 
     legend.title = element_text(size = 16),
     legend.text = element_text(size = 15)
   )
@@ -90,7 +89,6 @@ ggplot() +
                      name = "Apsaimniekošanas grupa") +
   theme_minimal() +
   theme(
-    plot.title = element_text(size = 23, face = "bold"), 
     legend.title = element_text(size = 16),
     legend.text = element_text(size = 15)
   )

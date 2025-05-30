@@ -11,7 +11,7 @@ if(!require(tidyr)) install.packages("tidyr")
 
 
 # Dati --------
-TDataset <- read_excel("uzskaisu_dati.xlsx", sheet = "Noverojumi")
+TDataset <- read_excel("grafikiem.xlsx", sheet = "Noverojumi")
 summary(TDataset)
 TDataset <- TDataset[!is.na(TDataset$uzsk_ID),]  #Noņem tukšās rindas
 dim(TDataset)
@@ -44,10 +44,6 @@ TDataset$Jday <- yday(TDataset$datums)
 summary(TDataset)
 
 
-#Vajadzīgo vietu atlase
-unique(TDataset$vieta)
-TDataset <- TDataset[!(TDataset$vieta == "Ķemeri"),] #Noņemt Ķemeru uzskaites
-summary(TDataset)
 
 
 
@@ -61,17 +57,55 @@ summary(TDataset)
 hist(TDataset$josla) #Viss ir labi
 
 # Katras sugas novērojumu skaits
-Species_obs = data.frame(TDataset[!is.na(TDataset$latviskais),]) %>%
-  group_by(latviskais) %>%
-  summarise(observations=n())
+Species_obs <- TDataset %>%
+  filter(!is.na(zinatniskais)) %>%
+  group_by(zinatniskais) %>%
+  summarise( 
+    suga_kompleks = first(suga_komplekss),
+    observations = n(),
+     )
 Species_obs <- Species_obs[order(-Species_obs$observations),]
+
 head(Species_obs)
 
-ggplot(Species_obs,aes(x=fct_reorder(latviskais, -observations), y=observations))+
-  geom_col()+
-  geom_hline(yintercept=40) +
-  theme_bw()+
-  theme(axis.text.x = element_text(angle=90,vjust=0.5,hjust=1))
+
+#iegūt formātētus datus 
+# Piemērs:
+library(writexl)
+
+write_xlsx(Species_obs, "sugas_novejumi.xlsx")
+
+
+
+
+
+
+
+
+
+
+ggplot(Species_obs, aes(x = fct_reorder(zinatniskais, -observations), y = observations)) +
+  geom_col() +
+  theme_minimal(base_size = 16) +
+  scale_y_continuous(limits = c(0,100))+
+  geom_text(aes(label = paste("n =", observations)), 
+            angle = 90, vjust = 0.1, hjust =- 0.05, size = 4) +  # Teksts uz stabiņa
+    theme(
+    axis.text.x = element_text(size = 14, angle = 90, vjust = 0,  hjust = 1,  face = "italic"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank()
+  ) +
+  labs(
+    x = "Suga",
+    y = "Novērojumu skaits"
+  )
+
+
+
+
+
+
+
 
 
 
@@ -79,16 +113,15 @@ ggplot(Species_obs,aes(x=fct_reorder(latviskais, -observations), y=observations)
 
 #Katrai sugai novērojumu skaits pa vietām
 Species_obs_vieta <- TDataset %>%
-  filter(!is.na(latviskais), !is.na(vieta)) %>%
-  group_by(latviskais, vieta) %>%
+  filter(!is.na(zinatniskais), !is.na(vieta)) %>%
+  group_by(zinatniskais, vieta) %>%
   summarise(observations = n(), .groups = "drop")
 
-ggplot(Species_obs_vieta, aes(x = fct_reorder(latviskais, -observations, .fun = sum), 
+ggplot(Species_obs_vieta, aes(x = fct_reorder(zinatniskais, -observations, .fun = sum), 
                         y = observations, 
                         fill = vieta)) +
   geom_col() +
   geom_hline(yintercept = 40) +
-  facet_wrap(~vieta) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
   labs(x = "Suga", y = "Novērojumu skaits", fill = "Vieta")
@@ -96,11 +129,6 @@ ggplot(Species_obs_vieta, aes(x = fct_reorder(latviskais, -observations, .fun = 
 
 
 
-
-# Tabulas "Vietas" sagatavošana ----
-TVietas <- read_excel("uzskaisu_dati.xlsx", sheet = "Vietas")
-unique(TVietas$vieta)
-TVietas <- TVietas[!TVietas$vieta=="Ķemeri",] #Izņemt Ķeneru transektes
 
 
 
