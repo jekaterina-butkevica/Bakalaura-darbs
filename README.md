@@ -4,7 +4,7 @@
 
 ## Repozitorija saturs
 ### [Ievaddati](./Dati/)
-**`originalie_dati.xlsx`**  Petījuma analīzētie dati par dienastauriņiem novērojumiem.
+Satur petījuma analīzētos datus par dienastauriņiem novērojumiem: **`originalie_dati.xlsx`**
 
 Datu fails satur sēkojošas lapas:
 - Noverojumi
@@ -30,8 +30,8 @@ Komandrindas bakalaura darbā un aizstāvēšanas prezentācijā iekļauto Latvi
 
 
 ### [Pollarda metode](./Pollard/)
-**[Sugu fenoloģijas līknes](./Pollards/fenologija/)**
-Mape satur uz novērojumiem balstītas fenoloģijas līknes, visām pētījumā novērotām sugam, kam ir vairāk par 2 novērojumiem. Balstās uz novērojumeim no visām joslām.
+Mape **[Sugu fenoloģijas līknes](./Pollards/fenologija/)**
+Satur uz novērojumiem balstītas fenoloģijas līknes, visām pētījumā novērotām sugam, kam ir vairāk par 2 novērojumiem. Balstās uz novērojumeim no visām joslām.
 
-**[Pollarda līknesa_salīdzinājums](./Pollards/indeksi/)**
+Mape **[Pollarda līknesa_salīdzinājums](./Pollards/indeksi/)**
 Satur katrai pētījumā novērotai sugai veikto transekšu Pollarda indeksu vizuālo salīdzinājumu starp pētījuma vietām. Balstās uz novērojumiem Pollarda telpas ietvaros (1. līdz 3. josla).
