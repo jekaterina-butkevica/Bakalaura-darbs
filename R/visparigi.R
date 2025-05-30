@@ -2,18 +2,18 @@
 if(!require(readxl)) install.packages("readxl")
 if(!require(ggplot2)) install.packages("ggplot2")
 if(!require(forcats)) install.packages("forcats")
-if(!require(tidyr)) install.packages("tidyr")
+if(!require(dplyr)) install.packages("dplyr")
 
 
 # Dati --------
-dati <- read_excel("originalie_dati.xlsx", sheet = "Noverojumi")
+dati <- read_excel("Dati/originalie_dati.xlsx", sheet = "Noverojumi")
 summary(dati)
 dati <- dati[!is.na(dati$zinatniskais),]  #Noņem tukšās rindas
 dim(dati)
 
-# Sugu skaits
+# Sugu saraksts un skaits
 unique(dati$zinatniskais[!is.na(dati$zinatniskais)])
-
+length(unique(dati$zinatniskais[!is.na(dati$zinatniskais)]))
 
 # Katras sugas novērojumu skaits
 Species_obs <- dati %>%
@@ -28,7 +28,7 @@ Species_obs <- Species_obs[order(-Species_obs$observations),]
 
 
 
-
+# Attēls: novērojumu sadalījums starp sugām
 ggplot(Species_obs, aes(x = fct_reorder(zinatniskais, -observations), y = observations)) +
   geom_col() +
   theme_minimal(base_size = 16) +
@@ -57,7 +57,7 @@ print(sugas_dzimtas)
 
 
 
-# Kāpostu baltņa novērojumu sada;ijums pa vietām
+# Kāpostu balteņa novērojumu sadalījums starp vietām
 sugu_noverojumi_vietas <- dati %>%
   group_by(zinatniskais, vieta) %>%
   summarise(novērojumi = n(), .groups = "drop")
