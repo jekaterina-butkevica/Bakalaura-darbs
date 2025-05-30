@@ -4,7 +4,7 @@
 
 ## Repozitorija saturs
 
-### R skripti
+###[R skripti/](./R/)
 
 - **`0_visparigi.R`**
 - **`1_Pollarda_metode.R`**
