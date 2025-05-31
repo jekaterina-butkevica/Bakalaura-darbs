@@ -7,11 +7,11 @@
 Satur petījuma analīzētos datus par dienastauriņiem novērojumiem: **`originalie_dati.xlsx`**
 
 Datu fails satur sēkojošas lapas:
-- Noverojumi - informācija TY tabulai  - visi pētījuma laikā veiktie novērojumi
-- Uzskaites - informācija par uzskaišu skaitu un apsēkoto stransektu skaitu
-- Vietas - nemainīga vietu informācija TVietas tabulai - identifikātori, transekšu koordinātes, kustības intensitāte
-- Refernce - references lapa, lapas "Noverojumi" automātiskai aizpildei
-- Lauku_skaidrojumi - Kolonnu nosaukumu skaidrojumi
+- **Noverojumi** - informācija TY tabulai  - visi pētījuma laikā veiktie novērojumi
+- **Uzskaites** - informācija par uzskaišu skaitu un apsēkoto stransektu skaitu
+- **Vietas** - nemainīga vietu informācija TVietas tabulai - identifikātori, transekšu koordinātes, kustības intensitāte
+- **Refernce** - references lapa, lapas "Noverojumi" automātiskai aizpildei
+- **Lauku_skaidrojumi** - Kolonnu nosaukumu skaidrojumi
 
 
 
