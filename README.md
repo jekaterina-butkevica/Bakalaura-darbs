@@ -36,7 +36,7 @@ Komandrindas bakalaura darbā un aizstāvēšanas prezentācijā iekļauto Latvi
 
 
 
-### [Pollarda metode](./Pollard/)
+### [Pollarda metode](./Pollards/)
 Mape **[Sugu fenoloģijas līknes](./Pollards/fenologija/)**
 Satur uz novērojumiem balstītas fenoloģijas līknes, visām pētījumā novērotām sugam, kam ir vairāk par 2 novērojumiem. Balstās uz novērojumeim no visām joslām.
 
