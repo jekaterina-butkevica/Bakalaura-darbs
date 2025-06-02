@@ -40,7 +40,7 @@ Komandrindas bakalaura darbā un aizstāvēšanas prezentācijā iekļauto Latvi
 Mape **[Sugu fenoloģijas līknes](./Pollards/fenologija/)**
 Satur uz novērojumiem balstītas fenoloģijas līknes, visām pētījumā novērotām sugam, kam ir vairāk par 2 novērojumiem. Balstās uz novērojumeim no visām joslām.
 
-Mape **[Pollarda līknesa_salīdzinājums](./Pollards/indeksi/)**
+Mape **[Pollarda indeksa_salīdzinājums](./Pollards/indeksi/)**
 Satur katrai pētījumā novērotai sugai veikto transekšu Pollarda indeksu vizuālo salīdzinājumu starp pētījuma vietām. Balstās uz novērojumiem Pollarda telpas ietvaros (1. līdz 3. josla).
 
 
