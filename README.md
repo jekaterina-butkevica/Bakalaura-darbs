@@ -45,7 +45,7 @@ Satur katrai pētījumā novērotai sugai veikto transekšu Pollarda indeksu viz
 
 
 
-### [Rezultāti](.//Rezultati)
+### [Rezultāti](.//Rezultāti)
 Šī mape satur attēlus ar galvēnajiem pētījuma rezultātiem, kā arī attēlus, kas analīzēti diskusijas sadaļā.
 
 - `sugu_noverojumi.png` - novērojumu skaita sadalijums starp pētījuma registrētām sugām
