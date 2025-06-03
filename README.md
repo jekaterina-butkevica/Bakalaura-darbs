@@ -7,11 +7,11 @@
 Satur petījuma analīzētos datus par dienastauriņiem novērojumiem: **`originalie_dati.xlsx`**
 
 Datu fails satur sēkojošas lapas:
-- Noverojumi
-- Uzskaites
-- Vietas
-- Refernce
-- Lauku_skaidrojumi
+- **Noverojumi** - informācija TY tabulai  - visi pētījuma laikā veiktie novērojumi
+- **Uzskaites** - informācija par uzskaišu skaitu un apsēkoto stransektu skaitu
+- **Vietas** - nemainīga vietu informācija TVietas tabulai - identifikātori, transekšu koordinātes, kustības intensitāte
+- **Refernce** - references lapa, lapas "Noverojumi" automātiskai aizpildei
+- **Lauku_skaidrojumi** - Kolonnu nosaukumu skaidrojumi
 
 
 
@@ -36,27 +36,27 @@ Komandrindas bakalaura darbā un aizstāvēšanas prezentācijā iekļauto Latvi
 
 
 
-### [Pollarda metode](./Pollard/)
+### [Pollarda metode](./Pollards/)
 Mape **[Sugu fenoloģijas līknes](./Pollards/fenologija/)**
 Satur uz novērojumiem balstītas fenoloģijas līknes, visām pētījumā novērotām sugam, kam ir vairāk par 2 novērojumiem. Balstās uz novērojumeim no visām joslām.
 
-Mape **[Pollarda līknesa_salīdzinājums](./Pollards/indeksi/)**
+Mape **[Pollarda indeksa salīdzinājums](./Pollards/indeksi/)**
 Satur katrai pētījumā novērotai sugai veikto transekšu Pollarda indeksu vizuālo salīdzinājumu starp pētījuma vietām. Balstās uz novērojumiem Pollarda telpas ietvaros (1. līdz 3. josla).
 
 
 
-### [Rezultāti](.//Rezultati)
+### [Rezultāti](.//Rezultāti)
 Šī mape satur attēlus ar galvēnajiem pētījuma rezultātiem, kā arī attēlus, kas analīzēti diskusijas sadaļā.
 
-- sugu_noverojumi.png
-- Pollard_index_Pieris_brassicae.png
-- distances_funkcija.png
-- aplestais_noverotais_salidzinajums.png
-- pieejamiba_sezona.png
-- pollard_logs_temp_apg.png
-- pollard_vejs.png
-- Pieris_brassicase_fenologija.png
-- Pierisspp_pierisbrass_barplot.png
+- `sugu_noverojumi.png` - novērojumu skaita sadalijums starp pētījuma registrētām sugām
+- `Pollard_index_Pieris_brassicae.png` - Kāpostu balteņa Polarda indeksa vērtību salīdzināums starp vietam
+- `distances_funkcija.png` - kāpostu balteņa pieejamības izmaiņas ar attālumu
+- `aplestais_noverotais_salidzinajums.png` - kāpostu balteņa  un aplēsta kopskaita vizuāls salīzinājums
+- `pieejamiba_sezona.png` - prognoze kapostu balteņa pieejamības izmaiņām sezonas laikā
+- `pollard_logs_temp_apg.png` - kāpostu balteņa pieejamības prognoze dažādām apgaismojuma un temperatūŗas kombinācijām
+- `pollard_vejs.png` - kāpostu balteņa pieejamības prognoze dažādām vēja un temepratūras kombinācijām
+- `Pieris_brassicase_fenologija.png` - uz novērojumiem balstīta kāpostu balteņa ffenoloģijas līkne
+- `Pierisspp_pierisbrass_barplot.png` - novērojumu sadallījums starp joslām: salīdzinājums starp _Pieris_ ģints nenoteiktiem indivīdiem un kāpostu baltenim.
 
 
 
