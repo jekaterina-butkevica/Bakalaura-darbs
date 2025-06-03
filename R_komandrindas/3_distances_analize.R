@@ -417,7 +417,7 @@ TUzskaites=TUzskaites %>%
 
 
 # Tabula "Vietas" ----------------------------
-TVietas <- read_excel("originalie_dati.xlsx", sheet = "Vietas")
+TVietas <- read_excel("Dati/originalie_dati.xlsx", sheet = "Vietas")
 
 TVietas <- TVietas[!TVietas$vieta=="Šlītere",] #Izņemt Šlīteres transektes
 unique(TVietas$vieta)
